@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
+import 'package:path/path.dart' as path;
 
 class SearchApplication extends StatefulWidget {
   const SearchApplication({super.key});
@@ -63,8 +65,9 @@ class _FutureIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: FreedesktopIconThemes()
-          .findIcon(IconQuery(name: "com.obsproject.Studio", size: 64, extensions: const [])),
+      future: () async {
+        return searchIcon(icon);
+      }(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
@@ -74,16 +77,26 @@ class _FutureIcon extends StatelessWidget {
           );
         }
         if (snapshot.error != null) {
-          print("ERROR\n${snapshot.error}\nSTACKTRACE: ${snapshot.stackTrace}");
           return const Icon(Icons.error);
         }
         if (snapshot.data == null) {
-          print("ADSASDADS FUCK IS NULL");
           return const SizedBox.shrink();
         }
-        print("ADSASDADS ${snapshot.data}");
-        final image = Image.file(snapshot.data!, width: 25, height: 25);
-        return image;
+        if (path.extension(snapshot.data!.path) == ".svg") {
+          print(snapshot.data!.path);
+          return SizedBox(
+            width: 25,
+            height: 25,
+            child: SvgPicture.file(
+              snapshot.data!,
+              width: 25,
+              height: 25,
+              fit: BoxFit.scaleDown,
+            ),
+          );
+        } else {
+          return Image.file(snapshot.data!, width: 25, height: 25);
+        }
       },
     );
   }

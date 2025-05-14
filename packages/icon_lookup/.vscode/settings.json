@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.templ": "templ",
+        "*.template": "go-template",
+        "**/.i3/config": "i3",
+        "**/i3/config": "i3",
+        "*.env": "properties",
+        "icon_lookup.h": "c"
+    }
+}

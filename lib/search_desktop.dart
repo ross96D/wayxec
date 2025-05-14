@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_gtk_shell_layer_test/utils.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as fde;
 import 'package:path/path.dart' as path;
+import 'package:icon_lookup/icon_lookup.dart' as icon_lookup;
 
 typedef Key = fde.DesktopEntryKey;
 
@@ -256,7 +257,12 @@ File? searchIcon(String iconpath) {
   if (path.isAbsolute(iconpath)) {
     return File(iconpath);
   }
-  final directories = whereExists<Directory>(_getIconBaseDirectories().map(Directory.new));
+  final result = icon_lookup.iconLookup(iconpath);
+  if (result == null) {
+    return null;
+  } else {
+    return File(result.value);
+  }
 }
 
 /// Returns all the places where icons *could* reside. These directories might
