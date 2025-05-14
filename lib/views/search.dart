@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart';
 import 'package:path/path.dart' as path;
 
 class SearchApplication extends StatefulWidget {
@@ -83,7 +82,6 @@ class _FutureIcon extends StatelessWidget {
           return const SizedBox.shrink();
         }
         if (path.extension(snapshot.data!.path) == ".svg") {
-          print(snapshot.data!.path);
           return SizedBox(
             width: 25,
             height: 25,
