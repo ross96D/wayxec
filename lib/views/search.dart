@@ -59,43 +59,31 @@ class _SearchApplicationState extends State<SearchApplication> {
 
 class _FutureIcon extends StatelessWidget {
   final String icon;
-  const _FutureIcon(this.icon);
+  late Widget iconImage;
+  _FutureIcon(this.icon) {
+    final file = searchIcon(icon);
+    if (file == null) {
+      iconImage = const SizedBox.shrink();
+      return;
+    }
+    if (path.extension(file.path) == ".svg") {
+      iconImage = SizedBox(
+        width: 25,
+        height: 25,
+        child: SvgPicture.file(
+          file,
+          width: 25,
+          height: 25,
+          fit: BoxFit.scaleDown,
+        ),
+      );
+    } else {
+      iconImage = Image.file(file, width: 25, height: 25);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: () async {
-        return searchIcon(icon);
-      }(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            width: 25,
-            height: 25,
-            child: CircularProgressIndicator(),
-          );
-        }
-        if (snapshot.error != null) {
-          return const Icon(Icons.error);
-        }
-        if (snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
-        if (path.extension(snapshot.data!.path) == ".svg") {
-          return SizedBox(
-            width: 25,
-            height: 25,
-            child: SvgPicture.file(
-              snapshot.data!,
-              width: 25,
-              height: 25,
-              fit: BoxFit.scaleDown,
-            ),
-          );
-        } else {
-          return Image.file(snapshot.data!, width: 25, height: 25);
-        }
-      },
-    );
+    return iconImage;
   }
 }

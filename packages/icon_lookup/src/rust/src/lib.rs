@@ -1,9 +1,11 @@
 use std::{
-    ffi::{c_char, CStr, OsString},
+    ffi::{CStr, OsString, c_char},
     os::unix::ffi::OsStrExt,
 };
 
 use freedesktop_icons::lookup;
+
+use resvg::{prelude::*, usvg};
 
 #[unsafe(no_mangle)]
 extern "C" fn rust_add(left: i64, right: i64) -> i64 {
@@ -43,6 +45,8 @@ extern "C" fn rust_lookup_icon(icon: *const c_char, result: *mut *const u8) -> u
         }
     }
 }
+
+fn asdads() {}
 
 #[cfg(test)]
 mod tests {

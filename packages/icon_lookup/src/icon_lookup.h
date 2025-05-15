@@ -20,7 +20,6 @@ struct IconLookup_String {
     char* ptr;
 };
 
-
 typedef struct IconLookup_String IconLookup_String;
 
 
