@@ -15,13 +15,22 @@ class SearchApplication extends StatefulWidget {
 
 class _SearchApplicationState extends State<SearchApplication> {
   late final Future<List<Application>> apps;
-  final TextEditingController controller = TextEditingController();
+  final TextEditingController textController = TextEditingController();
+  final ScrollController scrollController = ScrollController();
   final FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
-    apps = compute((_) async => loadApplications().toList(), 0);
     super.initState();
+    apps = compute((_) async => loadApplications().toList(), 0);
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    scrollController.dispose();
+    focusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -31,7 +40,7 @@ class _SearchApplicationState extends State<SearchApplication> {
         TextFormField(
           focusNode: focusNode,
           autofocus: true,
-          controller: controller,
+          controller: textController,
           decoration: const InputDecoration(
             contentPadding: EdgeInsets.all(2.0),
           ),
@@ -52,6 +61,7 @@ class _SearchApplicationState extends State<SearchApplication> {
               final data = snapshot.data!;
 
               return ListView.builder(
+                controller: scrollController,
                 addAutomaticKeepAlives: false,
                 addSemanticIndexes: false,
                 itemCount: data.length,
@@ -65,6 +75,7 @@ class _SearchApplicationState extends State<SearchApplication> {
                     enabled: true,
                     onTap: () {},
                     hoverColor: theme.hoverColor,
+                    focusNode: FocusNode(),
                   );
                 },
               );
