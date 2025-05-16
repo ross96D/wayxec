@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gtk_shell_layer_test/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
@@ -11,7 +12,21 @@ void main() async {
     throw StateError("Unsupported layer shell protocol");
   }
   await shell.setLayer(ShellLayer.layerTop);
+  await shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand);
   runApp(const MyApp());
+}
+
+// Custom Intent for exiting the app
+class ExitIntent extends Intent {
+  const ExitIntent();
+}
+
+// Custom Action that handles the ExitIntent
+class ExitAction extends Action<ExitIntent> {
+  @override
+  void invoke(covariant ExitIntent intent) {
+    SystemNavigator.pop(); // Close the application
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -26,10 +41,17 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      shortcuts: <ShortcutActivator, Intent>{
+        ...WidgetsApp.defaultShortcuts,
+        const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent()
+      },
+      actions: {
+        ...WidgetsApp.defaultActions,
+        ExitIntent: ExitAction(),
+      },
       home: Scaffold(
         body: Center(child: SearchApplication(key: GlobalKey())),
       ),
     );
   }
 }
-
