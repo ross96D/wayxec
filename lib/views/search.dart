@@ -37,35 +37,34 @@ class _SearchApplicationState extends State<SearchApplication> {
           );
         }
         final data = snapshot.data!;
-        // ListView.builder is too slow.. so i initialize all widgets from the start
-        return ListView(
-          children: _buildChilds(context, data),
+
+        return ListView.builder(
+          addAutomaticKeepAlives: false,
+          addSemanticIndexes: false,
+          itemCount: data.length,
+          prototypeItem: const ListTile(),
+          itemBuilder: (context, index) {
+            final theme = Theme.of(context);
+            final app = data[index];
+            return ListTile(
+              leading: app.icon != null ? _FutureIcon(app.icon!) : null,
+              title: Text(app.name),
+              enabled: true,
+              onTap: () {},
+              hoverColor: theme.hoverColor,
+            );
+          },
         );
       },
     );
   }
-
-  List<Widget> _buildChilds(BuildContext context, List<Application> apps) {
-    final theme = Theme.of(context);
-    final result = <Widget>[];
-    for (final app in apps) {
-      result.add(ListTile(
-        leading: app.icon != null ? _FutureIcon(app.icon!) : null,
-        title: Text(app.name),
-        enabled: true,
-        onTap: () {},
-        hoverColor: theme.hoverColor,
-      ));
-    }
-    return result;
-  }
 }
 
 class _FutureIcon extends StatelessWidget {
-  final String icon;
   final String? filepath;
 
-  _FutureIcon(this.icon) : filepath = searchIcon(icon);
+  // TODO the icon path should not be loaded here. Should be loaded at application start. 
+  _FutureIcon(String icon) : filepath = searchIcon(icon);
 
   @override
   Widget build(BuildContext context) {
