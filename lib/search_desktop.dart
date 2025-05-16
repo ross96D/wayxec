@@ -254,7 +254,7 @@ class FileSystemError extends ParseApplicationError {
 }
 
 /// cache for searchIcon
-Map<String, String> _searchIconCache = {};
+Map<String, (String?,)> _searchIconCache = {};
 
 String? searchIcon(String iconpath) {
   if (path.isAbsolute(iconpath)) {
@@ -262,13 +262,14 @@ String? searchIcon(String iconpath) {
   }
   final cached = _searchIconCache[iconpath];
   if (cached != null) {
-    return cached;
+    return cached.$1;
   }
   final result = icon_lookup.iconLookup(iconpath);
   if (result == null) {
+    _searchIconCache[iconpath] = (null,);
     return null;
   } else {
-    _searchIconCache[iconpath] = result.value;
+    _searchIconCache[iconpath] = (result.value,);
     return result.value;
   }
 }
