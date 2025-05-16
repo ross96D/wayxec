@@ -1,9 +1,6 @@
 
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:path/path.dart' as path;
-
 abstract class Err {
   const Err();
   String error();
@@ -93,20 +90,4 @@ class Result<T extends Object, E extends Err> {
     return null;
   }
   return (localization[0], localization[1]);
-}
-
-Image? getIcon(String? filepath) {
-  // TODO cache 
-  if (filepath == null) {
-    return null;
-  }
-  if (!path.isAbsolute(filepath)) {
-    return null;
-  } else {
-    final file = File(filepath);
-    if (!file.existsSync()) {
-      return null;
-    }
-    return Image.file(file, width: 25, height: 25);
-  }
 }

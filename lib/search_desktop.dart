@@ -37,7 +37,9 @@ Iterable<Application> loadApplications() sync* {
       if (entry is File) {
         final result = Application.parseFromFile(entry);
         if (result.isSuccess()) {
-          yield result.unsafeGetSuccess();
+          final app =  result.unsafeGetSuccess();
+          app._iconPath = app.iconPath;
+          yield app;
         }
       }
     }
@@ -58,6 +60,14 @@ class Application {
   /// [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/)
   /// will be used to locate the icon
   final String? icon;
+  String? _iconPath;
+  String? get iconPath {
+    if (icon == null) {
+      return null;
+    }
+    _iconPath ??= searchIcon(icon!);
+    return _iconPath;
+  }
 
   /// A list of strings identifying the desktop environments that
   /// should display/not display a given desktop entry.
@@ -101,7 +111,7 @@ class Application {
   /// A list of strings which may be used in addition to other metadata to describe this entry.
   final List<String>? keywords;
 
-  const Application({
+  Application({
     required this.name,
     this.exec,
     this.tryExec,

@@ -6,7 +6,10 @@ import 'package:flutter_gtk_shell_layer_test/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
 
+late Future<List<Application>> apps; 
+
 void main() async {
+  apps = compute((_) async => loadApplications().toList(), 0);
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
   final isSupported = await shell.initialize(400, 400);
@@ -63,7 +66,7 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
         body: Center(
           child: FutureBuilder(
-            future: compute((_) async => loadApplications().toList(), 0),
+            future: apps,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return SearchApplication(apps: snapshot.data!);
