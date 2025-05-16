@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('A group of tests', () {
     final damerauLevenshtein = optimalStringAlignmentDistance;
-    final dice = diceCoefficient;
+    final _ = diceCoefficient;
 
     setUp(() {
       // Additional setup goes here.
