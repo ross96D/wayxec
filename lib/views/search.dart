@@ -15,6 +15,8 @@ class SearchApplication extends StatefulWidget {
 
 class _SearchApplicationState extends State<SearchApplication> {
   late final Future<List<Application>> apps;
+  final TextEditingController controller = TextEditingController();
+  final FocusNode focusNode = FocusNode();
 
   @override
   void initState() {
@@ -24,38 +26,52 @@ class _SearchApplicationState extends State<SearchApplication> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: apps,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: SizedBox(
-              width: 25,
-              height: 25,
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-        final data = snapshot.data!;
+    return Column(
+      children: [
+        TextFormField(
+          focusNode: focusNode,
+          autofocus: true,
+          controller: controller,
+          decoration: const InputDecoration(
+            contentPadding: EdgeInsets.all(2.0),
+          ),
+        ),
+        Expanded(
+          child: FutureBuilder(
+            future: apps,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: SizedBox(
+                    width: 25,
+                    height: 25,
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              final data = snapshot.data!;
 
-        return ListView.builder(
-          addAutomaticKeepAlives: false,
-          addSemanticIndexes: false,
-          itemCount: data.length,
-          prototypeItem: const ListTile(),
-          itemBuilder: (context, index) {
-            final theme = Theme.of(context);
-            final app = data[index];
-            return ListTile(
-              leading: app.icon != null ? _FutureIcon(app.icon!) : null,
-              title: Text(app.name),
-              enabled: true,
-              onTap: () {},
-              hoverColor: theme.hoverColor,
-            );
-          },
-        );
-      },
+              return ListView.builder(
+                addAutomaticKeepAlives: false,
+                addSemanticIndexes: false,
+                itemCount: data.length,
+                prototypeItem: const ListTile(),
+                itemBuilder: (context, index) {
+                  final theme = Theme.of(context);
+                  final app = data[index];
+                  return ListTile(
+                    leading: app.icon != null ? _FutureIcon(app.icon!) : null,
+                    title: Text(app.name),
+                    enabled: true,
+                    onTap: () {},
+                    hoverColor: theme.hoverColor,
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -63,7 +79,7 @@ class _SearchApplicationState extends State<SearchApplication> {
 class _FutureIcon extends StatelessWidget {
   final String? filepath;
 
-  // TODO the icon path should not be loaded here. Should be loaded at application start. 
+  // TODO the icon path should not be loaded here. Should be loaded at application start.
   _FutureIcon(String icon) : filepath = searchIcon(icon);
 
   @override
