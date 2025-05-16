@@ -1,88 +1,104 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:path/path.dart' as path;
 import 'package:rresvg/rresvg.dart';
 
 class SearchApplication extends StatefulWidget {
-  const SearchApplication({super.key});
+  final List<Application> apps;
+  const SearchApplication({super.key, required this.apps});
 
   @override
   State<SearchApplication> createState() => _SearchApplicationState();
 }
 
 class _SearchApplicationState extends State<SearchApplication> {
-  late final Future<List<Application>> apps;
   final TextEditingController textController = TextEditingController();
   final ScrollController scrollController = ScrollController();
-  final FocusNode focusNode = FocusNode();
+  final FocusNode keyboardFocusNode = FocusNode();
+  final FocusNode textFocusNode = FocusNode();
+  final focusNodes = <FocusNode>[];
 
   @override
   void initState() {
     super.initState();
-    apps = compute((_) async => loadApplications().toList(), 0);
+    focusNodes.addAll(List.generate(widget.apps.length, (index) => FocusNode()));
+    focusNodes[0].requestFocus();
   }
 
   @override
   void dispose() {
     textController.dispose();
     scrollController.dispose();
-    focusNode.dispose();
+    keyboardFocusNode.dispose();
+    textFocusNode.dispose();
+    for (final node in focusNodes) {
+      node.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextFormField(
-          focusNode: focusNode,
-          autofocus: true,
-          controller: textController,
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.all(2.0),
+    return RawKeyboardListener(
+      focusNode: keyboardFocusNode,
+      onKey: (value) {
+        if (textFocusNode.hasFocus) {
+          if (value.physicalKey == PhysicalKeyboardKey.arrowDown) {
+            setState(() {
+              focusNodes[0].requestFocus();
+            });
+          }
+        } else {
+          if (value.character != null) {
+            textFocusNode.requestFocus();
+          }
+        }
+      },
+      child: Column(
+        children: [
+          TextFormField(
+            focusNode: textFocusNode,
+            autofocus: true,
+            controller: textController,
+            decoration: const InputDecoration(
+              contentPadding: EdgeInsets.all(2.0),
+            ),
           ),
-        ),
-        Expanded(
-          child: FutureBuilder(
-            future: apps,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: SizedBox(
-                    width: 25,
-                    height: 25,
-                    child: CircularProgressIndicator(),
-                  ),
+          Expanded(
+            child: ListView.builder(
+              controller: scrollController,
+              addAutomaticKeepAlives: false,
+              addSemanticIndexes: false,
+              itemCount: widget.apps.length,
+              prototypeItem: const ListTile(),
+              itemBuilder: (context, index) {
+                final theme = Theme.of(context);
+                final app = widget.apps[index];
+                return ListTile(
+                  leading: app.icon != null ? _FutureIcon(app.icon!) : null,
+                  title: Text(app.name),
+                  enabled: true,
+                  focusNode: focusNodes[index],
+                  onFocusChange: (v) {
+                    if (v) {
+                      setState(() {});
+                    }
+                  },
+                  onTap: () {
+                    setState(() {
+                      focusNodes[index].requestFocus();
+                    });
+                  },
+                  hoverColor: theme.hoverColor,
                 );
-              }
-              final data = snapshot.data!;
-
-              return ListView.builder(
-                controller: scrollController,
-                addAutomaticKeepAlives: false,
-                addSemanticIndexes: false,
-                itemCount: data.length,
-                prototypeItem: const ListTile(),
-                itemBuilder: (context, index) {
-                  final theme = Theme.of(context);
-                  final app = data[index];
-                  return ListTile(
-                    leading: app.icon != null ? _FutureIcon(app.icon!) : null,
-                    title: Text(app.name),
-                    enabled: true,
-                    onTap: () {},
-                    hoverColor: theme.hoverColor,
-                    focusNode: FocusNode(),
-                  );
-                },
-              );
-            },
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:flutter_gtk_shell_layer_test/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
@@ -34,6 +36,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // apps = compute((_) async => loadApplications().toList(), 0);
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
@@ -50,7 +53,22 @@ class MyApp extends StatelessWidget {
         ExitIntent: ExitAction(),
       },
       home: Scaffold(
-        body: Center(child: SearchApplication(key: GlobalKey())),
+        body: Center(
+          child: FutureBuilder(
+            future: compute((_) async => loadApplications().toList(), 0),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return SearchApplication(apps: snapshot.data!);
+              } else {
+                return const SizedBox(
+                  height: 35,
+                  width: 35,
+                  child: CircularProgressIndicator(),
+                );
+              }
+            },
+          ),
+        ),
       ),
     );
   }
