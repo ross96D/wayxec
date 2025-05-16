@@ -42,10 +42,9 @@ class _MyAppState extends State<MyApp> {
                   textAlign: TextAlign.center,
                 ),
                 spacerSmall,
-                SizedBox(
-                  height: 10,
-                  width: 10,
-                  child: rresvg.SvgView(data: "/usr/share/icons/hicolor/scalable/apps/btop.svg"),
+                rresvg.SvgView(
+                  filepath: "/usr/share/icons/hicolor/scalable/apps/btop.svg",
+                  constraints: BoxConstraints.tightFor(height: 10, width: 10),
                 ),
               ],
             ),

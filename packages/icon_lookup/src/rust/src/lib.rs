@@ -5,13 +5,6 @@ use std::{
 
 use freedesktop_icons::lookup;
 
-use resvg::{prelude::*, usvg};
-
-#[unsafe(no_mangle)]
-extern "C" fn rust_add(left: i64, right: i64) -> i64 {
-    left + right
-}
-
 #[unsafe(no_mangle)]
 extern "C" fn rust_free_lookup_icon_result(ptr: *mut u8, len: u64) {
     unsafe {
@@ -27,6 +20,18 @@ extern "C" fn rust_lookup_icon(icon: *const c_char, result: *mut *const u8) -> u
     let c_str: &CStr = unsafe { CStr::from_ptr(icon) };
     let icon_str = c_str.to_str().unwrap();
 
+    match lookup(icon_str).with_size(128).find() {
+        Some(v) => {
+            let osstring: OsString = v.into();
+            let boxed = osstring.into_boxed_os_str();
+            let ostr = Box::leak(boxed);
+            unsafe {
+                (*result) = ostr.as_bytes().as_ptr();
+            }
+            return ostr.len() as u64;
+        }
+        None => {}
+    };
     match lookup(icon_str).find() {
         Some(v) => {
             let osstring: OsString = v.into();
@@ -45,8 +50,6 @@ extern "C" fn rust_lookup_icon(icon: *const c_char, result: *mut *const u8) -> u
         }
     }
 }
-
-fn asdads() {}
 
 #[cfg(test)]
 mod tests {

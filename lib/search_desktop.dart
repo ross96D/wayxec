@@ -253,15 +253,23 @@ class FileSystemError extends ParseApplicationError {
   String error() => err.toString();
 }
 
-File? searchIcon(String iconpath) {
+/// cache for searchIcon
+Map<String, String> _searchIconCache = {};
+
+String? searchIcon(String iconpath) {
   if (path.isAbsolute(iconpath)) {
-    return File(iconpath);
+    return iconpath;
+  }
+  final cached = _searchIconCache[iconpath];
+  if (cached != null) {
+    return cached;
   }
   final result = icon_lookup.iconLookup(iconpath);
   if (result == null) {
     return null;
   } else {
-    return File(result.value);
+    _searchIconCache[iconpath] = result.value;
+    return result.value;
   }
 }
 

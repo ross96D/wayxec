@@ -1,8 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as path;
+import 'package:rresvg/rresvg.dart';
 
 class SearchApplication extends StatefulWidget {
   const SearchApplication({super.key});
@@ -22,7 +24,6 @@ class _SearchApplicationState extends State<SearchApplication> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return FutureBuilder(
       future: apps,
       builder: (context, snapshot) {
@@ -36,54 +37,47 @@ class _SearchApplicationState extends State<SearchApplication> {
           );
         }
         final data = snapshot.data!;
-        return ListView.builder(
-          itemBuilder: (context, index) {
-            if (index < data.length) {
-              final app = data[index];
-              return ListTile(
-                leading: app.icon != null ? _FutureIcon(app.icon!) : null,
-                title: Text(app.name),
-                enabled: true,
-                onTap: () => print("HELLo"),
-                hoverColor: theme.hoverColor,
-              );
-            } else {
-              return null;
-            }
-          },
+        // ListView.builder is too slow.. so i initialize all widgets from the start
+        return ListView(
+          children: _buildChilds(context, data),
         );
       },
     );
+  }
+
+  List<Widget> _buildChilds(BuildContext context, List<Application> apps) {
+    final theme = Theme.of(context);
+    final result = <Widget>[];
+    for (final app in apps) {
+      result.add(ListTile(
+        leading: app.icon != null ? _FutureIcon(app.icon!) : null,
+        title: Text(app.name),
+        enabled: true,
+        onTap: () {},
+        hoverColor: theme.hoverColor,
+      ));
+    }
+    return result;
   }
 }
 
 class _FutureIcon extends StatelessWidget {
   final String icon;
-  late Widget iconImage;
-  _FutureIcon(this.icon) {
-    final file = searchIcon(icon);
-    if (file == null) {
-      iconImage = const SizedBox.shrink();
-      return;
-    }
-    if (path.extension(file.path) == ".svg") {
-      iconImage = SizedBox(
-        width: 25,
-        height: 25,
-        child: SvgPicture.file(
-          file,
-          width: 25,
-          height: 25,
-          fit: BoxFit.scaleDown,
-        ),
-      );
-    } else {
-      iconImage = Image.file(file, width: 25, height: 25);
-    }
-  }
+  final String? filepath;
+
+  _FutureIcon(this.icon) : filepath = searchIcon(icon);
 
   @override
   Widget build(BuildContext context) {
-    return iconImage;
+    if (filepath == null) {
+      return const SizedBox.shrink();
+    }
+    if (path.extension(filepath!) == ".svg") {
+      return SvgView(
+        filepath: filepath!,
+        constraints: const BoxConstraints.tightFor(height: 35, width: 35),
+      );
+    }
+    return Image.file(File(filepath!), width: 35, height: 35);
   }
 }
