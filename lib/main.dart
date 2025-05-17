@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gtk_shell_layer_test/db/db.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:flutter_gtk_shell_layer_test/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
@@ -8,8 +8,13 @@ import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
 
 late Future<List<Application>> apps; 
 
+late Stopwatch timetostart;
+bool firstBuild = true;
+
 void main() async {
-  apps = compute((_) async => loadApplications().toList(), 0);
+  timetostart = Stopwatch()..start();
+
+  apps = loadApplications(await database);
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
   final isSupported = await shell.initialize(400, 400);
@@ -69,6 +74,13 @@ class MyApp extends StatelessWidget {
             future: apps,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
+                if (firstBuild) {
+                  final spend = timetostart.elapsed.inMilliseconds;
+                  print("--------FIRST BUILD TIME--------");
+                  print("--------     ${spend}ms      --------");
+                  timetostart.stop();
+                  firstBuild = false;
+                }
                 return SearchApplication(apps: snapshot.data!);
               } else {
                 return const SizedBox(

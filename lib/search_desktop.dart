@@ -4,6 +4,8 @@ import 'package:flutter_gtk_shell_layer_test/utils.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as fde;
 import 'package:path/path.dart' as path;
 import 'package:icon_lookup/icon_lookup.dart' as icon_lookup;
+import 'package:json_annotation/json_annotation.dart';
+part 'search_desktop.g.dart';
 
 typedef Key = fde.DesktopEntryKey;
 
@@ -11,7 +13,8 @@ typedef Key = fde.DesktopEntryKey;
 ///
 /// applications location: $XDG_DATA_DIRS/applications/ ($XDG_DATA_DIRS is an array of directories)
 
-Iterable<String> getApplicationDirectories() => getDataDirectories().map((dir) => path.join(dir, 'applications'));
+Iterable<String> getApplicationDirectories() =>
+    getDataDirectories().map((dir) => path.join(dir, 'applications'));
 
 Iterable<String> getDataDirectories() sync* {
   yield Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');
@@ -27,27 +30,32 @@ String expandEnvironmentVariables(String path) {
   });
 }
 
-Iterable<Application> loadApplications() sync* {
-  for (final dirPath in getApplicationDirectories()) {
-    final dir = Directory(dirPath);
-    if (!dir.existsSync()) {
-      continue;
-    }
-    for (final entry in dir.listSync()) {
-      if (entry is File) {
-        final result = Application.parseFromFile(entry);
-        if (result.isSuccess()) {
-          final app =  result.unsafeGetSuccess();
-          app._iconPath = app.iconPath;
-          yield app;
-        }
-      }
-    }
-  }
-}
+// Iterable<Application> loadApplications() sync* {
+//   for (final dirPath in getApplicationDirectories()) {
+//     final dir = Directory(dirPath);
+//     if (!dir.existsSync()) {
+//       continue;
+//     }
+//     for (final entry in dir.listSync()) {
+//       if (entry is File) {
+//         final result = Application.parseFromFile(entry);
+//         if (result.isSuccess()) {
+//           final app =  result.unsafeGetSuccess();
+//           if (app.icon != null) {
+//             app.iconPath = searchIcon(app.icon!);
+//           }
+//           yield app;
+//         }
+//       }
+//     }
+//   }
+// }
 
-
+@JsonSerializable()
 class Application {
+  Map<String, dynamic> toJson() => _$ApplicationToJson(this);
+  factory Application.fromJson(Map<String, dynamic> json) => _$ApplicationFromJson(json);
+
   /// Application name
   final String name;
 
@@ -60,14 +68,7 @@ class Application {
   /// [Icon Theme Specification](https://specifications.freedesktop.org/icon-theme-spec/latest/)
   /// will be used to locate the icon
   final String? icon;
-  String? _iconPath;
-  String? get iconPath {
-    if (icon == null) {
-      return null;
-    }
-    _iconPath ??= searchIcon(icon!);
-    return _iconPath;
-  }
+  String? iconPath;
 
   /// A list of strings identifying the desktop environments that
   /// should display/not display a given desktop entry.
@@ -111,6 +112,11 @@ class Application {
   /// A list of strings which may be used in addition to other metadata to describe this entry.
   final List<String>? keywords;
 
+  /// Last date the file was modified, used for caching
+  final DateTime lastModified;
+  /// Desktop entry absolute filepath
+  final String filepath;
+
   Application({
     required this.name,
     this.exec,
@@ -123,10 +129,14 @@ class Application {
     this.onlyShownIn,
     this.notShownIn,
     this.keywords,
+    required this.lastModified,
+    required this.filepath,
   });
 
   static Result<Application, ParseApplicationError> _getAppFromEntries(
-      Map<String, String> entries) {
+    Map<String, String> entries,
+    File file,
+  ) {
     if (entries[Key.dBusActivatable.string] == null && entries[Key.exec.string] == null) {
       return Result.error(
         const DesktopEntryInvalidState(InvalidStateEnum.missingExecAndDBusActivatable),
@@ -161,6 +171,8 @@ class Application {
       keywords: keywords,
       notShownIn: entries["NotShowIn"]?.split(";"),
       onlyShownIn: entries["OnlyShownIn"]?.split(";"),
+      lastModified: file.statSync().modified,
+      filepath: file.absolute.path,
     ));
   }
 
@@ -179,11 +191,23 @@ class Application {
       final (lang, country) = local;
       final desktopEntryL = desktopEntry.localize(lang: lang, country: country);
 
-      return _getAppFromEntries(desktopEntryL.entries);
+      return _getAppFromEntries(desktopEntryL.entries, file);
     }
 
-    return _getAppFromEntries(desktopEntry.entries.map((key, value) => MapEntry(key, value.value)));
+    final data = desktopEntry.entries.map((key, value) => MapEntry(key, value.value));
+    return _getAppFromEntries(data, file);
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! Application) {
+      return false;
+    }
+    return other.filepath == filepath;
+  }
+  
+  @override
+  int get hashCode => filepath.hashCode;
 }
 
 enum Categories {
@@ -208,22 +232,24 @@ enum Categories {
     if (categoriesStr == null) {
       return null;
     }
-    return categoriesStr.map((e) => switch (e) {
-      "AudioVideo" => Categories.audioVideo,
-      "Audio" => Categories.audio,
-      "Video" => Categories.video,
-      "Development" => Categories.development,
-      "Education" => Categories.education,
-      "Game" => Categories.game,
-      "Graphics" => Categories.graphics,
-      "Network" => Categories.network,
-      "Office" => Categories.office,
-      "Science" => Categories.science,
-      "Settings" => Categories.settings,
-      "System" => Categories.system,
-      "Utility" => Categories.utility,
-      String() => null,
-    }).nonNulls;
+    return categoriesStr
+        .map((e) => switch (e) {
+              "AudioVideo" => Categories.audioVideo,
+              "Audio" => Categories.audio,
+              "Video" => Categories.video,
+              "Development" => Categories.development,
+              "Education" => Categories.education,
+              "Game" => Categories.game,
+              "Graphics" => Categories.graphics,
+              "Network" => Categories.network,
+              "Office" => Categories.office,
+              "Science" => Categories.science,
+              "Settings" => Categories.settings,
+              "System" => Categories.system,
+              "Utility" => Categories.utility,
+              String() => null,
+            })
+        .nonNulls;
   }
 }
 

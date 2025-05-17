@@ -63,26 +63,29 @@ class _SearchApplicationState extends State<SearchApplication> {
       },
       child: Column(
         children: [
-          TextFormField(
-            focusNode: textFocusNode,
-            autofocus: true,
-            controller: textController,
-            decoration: const InputDecoration(
-              contentPadding: EdgeInsets.all(2.0),
+          Container(
+            color: Theme.of(context).cardColor,
+            child: TextFormField(
+              focusNode: textFocusNode,
+              autofocus: true,
+              controller: textController,
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.all(2.0),
+              ),
+              onChanged: (v) {
+                setState(() {
+                  if (v.isEmpty) {
+                    filtered = widget.apps;
+                  } else {
+                    filtered = widget.apps.where((element) {
+                      // TODO improve the matching alghoritm (match parts)
+                      final end = min(v.length, element.name.length);
+                      return element.name.substring(0, end).similarityTo(v, ignoreCase: true) > 0.5;
+                    }).toList();
+                  }
+                });
+              },
             ),
-            onChanged: (v) {
-              setState(() {
-                if (v.isEmpty) {
-                  filtered = widget.apps;
-                } else {
-                  filtered = widget.apps.where((element) {
-                    // TODO improve the matching alghoritm (match parts)
-                    final end = min(v.length, element.name.length);
-                    return element.name.substring(0, end).similarityTo(v, ignoreCase: true) > 0.5;
-                  }).toList();
-                }
-              });
-            },
           ),
           Expanded(
             child: ListView.builder(
