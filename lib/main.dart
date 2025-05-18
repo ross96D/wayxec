@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gtk_shell_layer_test/db/db.dart';
@@ -19,7 +20,10 @@ void main() async {
     throw StateError("Unsupported layer shell protocol");
   }
   await shell.setLayer(ShellLayer.layerTop);
-  await shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand);
+  await switch(kDebugMode) {
+    true => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand),
+    false => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeExclusive),
+  };
   runApp(const MyApp());
 }
 
