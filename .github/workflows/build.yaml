@@ -10,6 +10,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Add vendor libraries to resvg rust package
+        run: ./install-resvg-vendor.sh
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2.13.0
         with:
