@@ -32,3 +32,4 @@ jobs:
         with:
           name: test_release
           artifacts: wayxec-x86_64.AppImage
+          tag: test_release
