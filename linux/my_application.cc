@@ -57,6 +57,22 @@ static void my_application_activate(GApplication* application) {
   fl_dart_project_set_dart_entrypoint_arguments(project, self->dart_entrypoint_arguments);
 
   FlView* view = fl_view_new(project);
+
+  /// Code to make the background window transparent
+
+  //! This code seems to work for flutter version 3.19-
+  GdkVisual* visual;
+  gtk_widget_set_app_paintable(GTK_WIDGET(window), TRUE);
+  visual = gdk_screen_get_rgba_visual(screen);
+  if (visual != NULL && gdk_screen_is_composited(screen)) {
+    gtk_widget_set_visual(GTK_WIDGET(window), visual);
+  }
+
+  //! This code seems to be needed for flutter version 3.19+
+  // GdkRGBA background_color;
+  // gdk_rgba_parse(&background_color, "#00000000");
+  // fl_view_set_background_color(view, &background_color);
+
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
