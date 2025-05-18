@@ -17,7 +17,7 @@ FetchContent_MakeAvailable(Corrosion)
 # Import Rust library
 corrosion_import_crate(
     MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml
-    CRATE_TYPES cdylib  # For C-ABI compatible shared library
+    CRATE_TYPES staticlib
 )
 
 
