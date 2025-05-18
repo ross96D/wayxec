@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_gtk_shell_layer_test/db/isolate_manager.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:sembast/sembast.dart';
@@ -12,11 +11,11 @@ final _dataHome =
 final _apppath = path.join(_dataHome, "myapplauncher.db");
 final database = MDatabase.open(_apppath);
 
-class MDatabase extends ValueNotifier<List<Application>> {
+class MDatabase {
   Database db;
   StoreRef<String, Map<String, Object?>> store;
 
-  MDatabase._(this.db, this.store) : super([]);
+  MDatabase._(this.db, this.store);
 
   static Future<MDatabase> open(String path) async {
     final db = await databaseFactoryIo.openDatabase(path);
@@ -25,9 +24,7 @@ class MDatabase extends ValueNotifier<List<Application>> {
 
   Future<List<Application>> getAll() async {
     final query = await store.find(db, finder: Finder());
-    final result = query.map((e) => Application.fromJson(e.value)).toList();
-    value = result;
-    return value;
+    return query.map((e) => Application.fromJson(e.value)).toList();
   }
 
   Future<void> clean() async {
@@ -41,7 +38,6 @@ class MDatabase extends ValueNotifier<List<Application>> {
   Future<void> saveAll(List<Application> apps) async {
     store.addAll(db, apps.map((e) => e.toJson()).toList());
     await store.records(apps.map((e) => e.name)).put(db, apps.map((e) => e.toJson()).toList());
-    value = apps;
   }
 }
 
