@@ -5,6 +5,7 @@ import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_gtk_shell_layer_test/utils.dart';
 
 final _dataHome =
     Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');
@@ -51,27 +52,6 @@ class MDatabase {
   }
 }
 
-/// File implementing the https://specifications.freedesktop.org/menu-spec for an app launcher
-///
-/// applications location: $XDG_DATA_DIRS/applications/ ($XDG_DATA_DIRS is an array of directories)
-
-Iterable<String> getApplicationDirectories() =>
-    getDataDirectories().map((dir) => path.join(dir, 'applications'));
-
-Iterable<String> getDataDirectories() sync* {
-  yield Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');
-  yield* (Platform.environment['XDG_DATA_DIRS'] ?? '/usr/local/share:/usr/share').split(':');
-}
-
-final unescapedVariables = RegExp(r'(?<!\\)\$([a-zA-Z_]+[a-zA-Z0-9_]*)');
-
-String expandEnvironmentVariables(String path) {
-  return path.replaceAllMapped(unescapedVariables, (Match match) {
-    String env = match[1]!;
-    return Platform.environment[env] ?? '';
-  });
-}
-
 Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old) async {
   final response = <Application>{};
   final futures = <Future>[];
@@ -96,6 +76,10 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
             if (response.contains(oldApp)) {
               continue;
             }
+            // check try exec
+            if (oldApp.tryExec != null && !tryExec(oldApp.tryExec!)) {
+              continue;
+            }
             response.add(oldApp);
             continue;
           }
@@ -107,6 +91,10 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
           // in case of two apps having the same name, the freedesktop spec says the first one
           // is the valid one
           if (response.contains(app)) {
+            continue;
+          }
+          // check try exec
+          if (app.tryExec != null && !tryExec(app.tryExec!)) {
             continue;
           }
           if (app.icon != null) {
@@ -139,7 +127,7 @@ Future<List<Application>> loadApplications(MDatabase db) async {
 
 List<Application> _orderApps(List<Application> apps) {
   List<Application> response = [];
-  
+
   int searchIndex(int timesExec) {
     int index = 0;
     for (final responseApp in response) {
@@ -160,4 +148,21 @@ List<Application> _orderApps(List<Application> apps) {
     }
   }
   return response;
+}
+
+bool tryExec(String tryExec) {
+  if (path.isAbsolute(tryExec)) {
+    final file = File(tryExec);
+    if (!file.existsSync()) {
+      return false;
+    }
+    return file.statSync().mode & 256 != 0;
+  }
+  for (final dir in getPathDirectories()) {
+    final file = File(path.join(dir, tryExec));
+    if (file.existsSync()) {
+      return file.statSync().mode & 256 != 0;
+    }
+  }
+  return false;
 }

@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 abstract class Err {
   const Err();
@@ -90,4 +91,35 @@ class Result<T extends Object, E extends Err> {
     return null;
   }
   return (localization[0], localization[1]);
+}
+
+
+Iterable<String> getPathDirectories() sync* {
+  final pathenv = Platform.environment["PATH"];
+  if (pathenv == null) {
+    return;
+  }
+  yield* Platform.environment["PATH"]!.split(":");
+}
+
+
+/// https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+Iterable<String> getDataDirectories() sync* {
+  yield Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');
+  yield* (Platform.environment['XDG_DATA_DIRS'] ?? '/usr/local/share:/usr/share').split(':');
+}
+
+/// Returns all potential directories where desktop entries might reside.
+/// Some directories might not exist.
+Iterable<String> getApplicationDirectories() => getDataDirectories().map((dir) => path.join(dir, 'applications'));
+
+// Only if the dollar sign does not have a backslash before it.
+final unescapedVariables = RegExp(r'(?<!\\)\$([a-zA-Z_]+[a-zA-Z0-9_]*)');
+
+/// Resolves environment variables. Replaces all $VARS with their value.
+String expandEnvironmentVariables(String path) {
+  return path.replaceAllMapped(unescapedVariables, (Match match) {
+    String env = match[1]!;
+    return Platform.environment[env] ?? '';
+  });
 }

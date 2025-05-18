@@ -9,27 +9,6 @@ part 'search_desktop.g.dart';
 
 typedef Key = fde.DesktopEntryKey;
 
-/// File implementing the https://specifications.freedesktop.org/menu-spec for an app launcher
-///
-/// applications location: $XDG_DATA_DIRS/applications/ ($XDG_DATA_DIRS is an array of directories)
-
-Iterable<String> getApplicationDirectories() =>
-    getDataDirectories().map((dir) => path.join(dir, 'applications'));
-
-Iterable<String> getDataDirectories() sync* {
-  yield Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');
-  yield* (Platform.environment['XDG_DATA_DIRS'] ?? '/usr/local/share:/usr/share').split(':');
-}
-
-final unescapedVariables = RegExp(r'(?<!\\)\$([a-zA-Z_]+[a-zA-Z0-9_]*)');
-
-String expandEnvironmentVariables(String path) {
-  return path.replaceAllMapped(unescapedVariables, (Match match) {
-    String env = match[1]!;
-    return Platform.environment[env] ?? '';
-  });
-}
-
 @JsonSerializable()
 class Application {
   Map<String, dynamic> toJson() => _$ApplicationToJson(this);
@@ -93,6 +72,7 @@ class Application {
 
   /// Last date the file was modified, used for caching
   final DateTime lastModified;
+
   /// Desktop entry absolute filepath
   final String filepath;
 
@@ -188,9 +168,22 @@ class Application {
     }
     return other.filepath == filepath;
   }
-  
+
   @override
   int get hashCode => filepath.hashCode;
+
+  Result<Void, StringError> run() {
+    if (dBusActivatable) {
+    } else {
+      if (exec == null) {
+        return Result.error(
+          const StringError("invalid desktop: no exec found when dBusActivable is false"),
+        );
+      }
+      Process.start(exec!, [""], mode: ProcessStartMode.detached);
+    }
+    return Result.success(Void());
+  }
 }
 
 enum Categories {
