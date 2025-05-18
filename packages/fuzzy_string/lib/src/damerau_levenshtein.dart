@@ -15,7 +15,6 @@ double optimalStringAlignmentScore(String s1, String s2, {
   var averageLenght = (s1.length + s2.length) / 2;
   var distance = optimalStringAlignmentDistance(s1, s2, ignoreCase: ignoreCase);
   var result = (averageLenght - distance > 0 ? averageLenght - distance : 0) / averageLenght;
-  if (result > 0.5) print('$s1 $s2 $result');
   return result;
 }
 

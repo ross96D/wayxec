@@ -200,7 +200,6 @@ class FreedesktopIconThemes {
 }
 
 Future<FreedesktopIconThemes> _index() async {
-  print("------------------------ZZZZZZZZZZZZZZZZZZZZZZZZZZZ------------------------");
   final baseDirectories = await whereExists(getIconBaseDirectories().map(Directory.new)).toList();
   final baseDirectoriesLastChangedTimes = _getBaseDirectoriesChangedTimes(baseDirectories);
   Map<Directory, List<FileSystemEntity>> baseDirectoryContents = await _getBaseDirectoryContents(baseDirectories);

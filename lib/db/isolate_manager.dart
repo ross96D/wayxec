@@ -100,11 +100,8 @@ class _IsolateInstance {
   Future<_Response<R>> send<R, T>(_Request<T> request) async {
     final completer = Completer<_Response<R>>();
     _requests[request.id] = completer;
-    Stopwatch ss = Stopwatch()..start();
-    print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ SEND ${isolate.debugName} ${_requests.length}");
     sender.send(request);
     final result = await completer.future;
-    print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOO RECIEVE ${ss.elapsedMilliseconds}ms");
     _requests.remove(request.id);
     return result;
   }

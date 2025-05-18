@@ -103,11 +103,6 @@ class _SearchApplicationState extends State<SearchApplication> {
                   title: Text(app.name),
                   enabled: true,
                   focusNode: focusNodes[index],
-                  onFocusChange: (v) {
-                    if (v) {
-                      setState(() {});
-                    }
-                  },
                   onTap: () async {
                     setState(() {
                       focusNodes[index].requestFocus();
