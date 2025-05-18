@@ -35,6 +35,16 @@ class MDatabase {
     await store.record(app.name).put(db, app.toJson());
   }
 
+  Future<void> increaseExecCounter(Application app) async {
+    final obj = await store.record(app.name).get(db);
+    if (obj == null) {
+      return;
+    }
+    final dbapp = Application.fromJson(obj);
+    dbapp.timesExec += 1;
+    store.record(app.name).put(db, dbapp.toJson(), merge: true);
+  }
+
   Future<void> saveAll(List<Application> apps) async {
     store.addAll(db, apps.map((e) => e.toJson()).toList());
     await store.records(apps.map((e) => e.name)).put(db, apps.map((e) => e.toJson()).toList());
@@ -115,11 +125,6 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
 
 Future<List<Application>> loadApplications(MDatabase db) async {
   var list = await db.getAll();
-  if (list.isEmpty) {
-    list = await loadApplicationsFromDisk({});
-    db.saveAll(list);
-    return list;
-  }
   final map = Map.fromEntries(list.map((e) => MapEntry(e.filepath, e)));
   final apps = await loadApplicationsFromDisk(map);
   for (final app in apps) {
@@ -129,5 +134,30 @@ Future<List<Application>> loadApplications(MDatabase db) async {
     }
     db.upsert(app);
   }
-  return apps;
+  return _orderApps(apps);
+}
+
+List<Application> _orderApps(List<Application> apps) {
+  List<Application> response = [];
+  
+  int searchIndex(int timesExec) {
+    int index = 0;
+    for (final responseApp in response) {
+      if (timesExec > responseApp.timesExec) {
+        return index;
+      }
+      index++;
+    }
+    return -1;
+  }
+
+  for (final app in apps) {
+    final index = searchIndex(app.timesExec);
+    if (index == -1) {
+      response.add(app);
+    } else {
+      response.insert(index, app);
+    }
+  }
+  return response;
 }

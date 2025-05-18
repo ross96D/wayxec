@@ -6,14 +6,11 @@ import 'package:flutter_gtk_shell_layer_test/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
 
-late Future<List<Application>> apps; 
+late Future<List<Application>> apps;
 
-late Stopwatch timetostart;
 bool firstBuild = true;
 
 void main() async {
-  timetostart = Stopwatch()..start();
-
   apps = loadApplications(await database);
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
@@ -44,21 +41,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // apps = compute((_) async => loadApplications().toList(), 0);
+    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+    final colorSchemeDark = ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.dark,
+    );
+
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: colorScheme,
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-          brightness: Brightness.dark),
+        colorScheme: colorSchemeDark,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      ),
       themeMode: ThemeMode.dark,
       shortcuts: <ShortcutActivator, Intent>{
         ...WidgetsApp.defaultShortcuts,
@@ -68,28 +68,24 @@ class MyApp extends StatelessWidget {
         ...WidgetsApp.defaultActions,
         ExitIntent: ExitAction(),
       },
-      home: Scaffold(
-        body: Center(
-          child: FutureBuilder(
-            future: apps,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                if (firstBuild) {
-                  final spend = timetostart.elapsed.inMilliseconds;
-                  print("--------FIRST BUILD TIME--------");
-                  print("--------     ${spend}ms      --------");
-                  timetostart.stop();
-                  firstBuild = false;
+      home: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        child: Scaffold(
+          body: Center(
+            child: FutureBuilder(
+              future: apps,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return SearchApplication(apps: snapshot.data!);
+                } else {
+                  return const SizedBox(
+                    height: 35,
+                    width: 35,
+                    child: CircularProgressIndicator(),
+                  );
                 }
-                return SearchApplication(apps: snapshot.data!);
-              } else {
-                return const SizedBox(
-                  height: 35,
-                  width: 35,
-                  child: CircularProgressIndicator(),
-                );
-              }
-            },
+              },
+            ),
           ),
         ),
       ),

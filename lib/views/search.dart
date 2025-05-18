@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gtk_shell_layer_test/db/db.dart';
 import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
 import 'package:path/path.dart' as path;
 import 'package:rresvg/rresvg.dart';
@@ -107,10 +108,11 @@ class _SearchApplicationState extends State<SearchApplication> {
                       setState(() {});
                     }
                   },
-                  onTap: () {
+                  onTap: () async {
                     setState(() {
                       focusNodes[index].requestFocus();
                     });
+                    (await database).increaseExecCounter(app);
                   },
                   hoverColor: theme.hoverColor,
                 );

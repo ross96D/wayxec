@@ -26,6 +26,7 @@ Application _$ApplicationFromJson(Map<String, dynamic> json) => Application(
       keywords: (json['keywords'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      timesExec: (json['timesExec'] as num?)?.toInt() ?? 0,
       lastModified: DateTime.parse(json['lastModified'] as String),
       filepath: json['filepath'] as String,
     )..iconPath = json['iconPath'] as String?;
@@ -47,6 +48,7 @@ Map<String, dynamic> _$ApplicationToJson(Application instance) =>
       'keywords': instance.keywords,
       'lastModified': instance.lastModified.toIso8601String(),
       'filepath': instance.filepath,
+      'timesExec': instance.timesExec,
     };
 
 const _$CategoriesEnumMap = {

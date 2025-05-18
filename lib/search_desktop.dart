@@ -30,27 +30,6 @@ String expandEnvironmentVariables(String path) {
   });
 }
 
-// Iterable<Application> loadApplications() sync* {
-//   for (final dirPath in getApplicationDirectories()) {
-//     final dir = Directory(dirPath);
-//     if (!dir.existsSync()) {
-//       continue;
-//     }
-//     for (final entry in dir.listSync()) {
-//       if (entry is File) {
-//         final result = Application.parseFromFile(entry);
-//         if (result.isSuccess()) {
-//           final app =  result.unsafeGetSuccess();
-//           if (app.icon != null) {
-//             app.iconPath = searchIcon(app.icon!);
-//           }
-//           yield app;
-//         }
-//       }
-//     }
-//   }
-// }
-
 @JsonSerializable()
 class Application {
   Map<String, dynamic> toJson() => _$ApplicationToJson(this);
@@ -117,6 +96,9 @@ class Application {
   /// Desktop entry absolute filepath
   final String filepath;
 
+  /// Times this application have been executed
+  int timesExec;
+
   Application({
     required this.name,
     this.exec,
@@ -129,6 +111,7 @@ class Application {
     this.onlyShownIn,
     this.notShownIn,
     this.keywords,
+    this.timesExec = 0,
     required this.lastModified,
     required this.filepath,
   });
