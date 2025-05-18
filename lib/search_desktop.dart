@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter_gtk_shell_layer_test/utils.dart';
+import 'package:wayxec/utils.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as fde;
 import 'package:path/path.dart' as path;
 import 'package:icon_lookup/icon_lookup.dart' as icon_lookup;

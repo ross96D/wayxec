@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:flutter_gtk_shell_layer_test/db/isolate_manager.dart';
-import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
+import 'package:wayxec/db/isolate_manager.dart';
+import 'package:wayxec/search_desktop.dart';
 import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:path/path.dart' as path;
-import 'package:flutter_gtk_shell_layer_test/utils.dart';
+import 'package:wayxec/utils.dart';
 
 final _dataHome =
     Platform.environment['XDG_DATA_HOME'] ?? expandEnvironmentVariables(r'$HOME/.local/share');

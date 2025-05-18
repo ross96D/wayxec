@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gtk_shell_layer_test/db/db.dart';
-import 'package:flutter_gtk_shell_layer_test/search_desktop.dart';
-import 'package:flutter_gtk_shell_layer_test/views/search.dart';
+import 'package:wayxec/db/db.dart';
+import 'package:wayxec/search_desktop.dart';
+import 'package:wayxec/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
 
