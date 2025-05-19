@@ -201,6 +201,7 @@ class Application {
         return Result.error(StringError("dbus activation error: $e"));
       }
       await SystemNavigator.pop();
+      exit(0);
     } else {
       if (exec == null) {
         const error = StringError("invalid desktop: no exec found when dBusActivable is false");
@@ -214,8 +215,8 @@ class Application {
         await Process.start(cmd, args, mode: ProcessStartMode.detached);
       }
       await SystemNavigator.pop();
+      exit(0);
     }
-    return Result.success(Void());
   }
 }
 
