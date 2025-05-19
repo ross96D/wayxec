@@ -47,6 +47,7 @@ class _SearchApplicationState extends State<SearchApplication> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return RawKeyboardListener(
       focusNode: keyboardFocusNode,
       onKey: (value) {
@@ -94,13 +95,29 @@ class _SearchApplicationState extends State<SearchApplication> {
               addAutomaticKeepAlives: false,
               addSemanticIndexes: false,
               itemCount: filtered.length,
-              prototypeItem: const ListTile(),
+              prototypeItem: ListTile(
+                title: Text("test", style: theme.textTheme.bodyLarge),
+                subtitle: Text("test", style: theme.textTheme.bodySmall),
+              ),
               itemBuilder: (context, index) {
                 final theme = Theme.of(context);
                 final app = filtered[index];
                 return ListTile(
                   leading: app.icon != null ? _FutureIcon(app.icon!) : null,
-                  title: Text(app.name),
+                  title: Text(
+                    app.name,
+                    style: theme.textTheme.bodyLarge,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                  ),
+                  subtitle: app.comment != null
+                      ? Text(
+                          app.comment!,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          style: theme.textTheme.bodySmall,
+                        )
+                      : null,
                   enabled: true,
                   focusNode: focusNodes[index],
                   onTap: () async {
