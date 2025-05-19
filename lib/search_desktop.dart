@@ -207,7 +207,12 @@ class Application {
         return Result.error(error);
       }
       final (cmd, args) = parseExec(exec!);
-      await Process.start(cmd, args, mode: ProcessStartMode.detached);
+      if (terminal) {
+        // TODO increase the list of terminals to launch and also make it configurable
+        await Process.start("alacritty", ["-e", cmd, ...args]);
+      } else {
+        await Process.start(cmd, args, mode: ProcessStartMode.detached);
+      }
       await SystemNavigator.pop();
     }
     return Result.success(Void());
