@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:dbus/dbus.dart';
+import 'package:flutter/services.dart';
 import 'package:wayxec/utils.dart';
 import 'package:freedesktop_desktop_entry/freedesktop_desktop_entry.dart' as fde;
 import 'package:path/path.dart' as path;
@@ -172,17 +174,102 @@ class Application {
   @override
   int get hashCode => filepath.hashCode;
 
-  Result<Void, StringError> run() {
+  Future<Result<Void, StringError>> run() async {
     if (dBusActivatable) {
+      String dbusname = path.basename(filepath);
+      if (dbusname.endsWith(".desktop")) {
+        dbusname = dbusname.substring(0, dbusname.length - ".desktop".length);
+      }
+      final client = DBusClient.session();
+      final pathObject = DBusObjectPath("/${dbusname.replaceAll(".", "/")}");
+      final remoteObject = DBusRemoteObject(client, name: dbusname, path: pathObject);
+      final params = [
+        DBusDict(
+          DBusSignature.string,
+          DBusSignature.variant,
+          {
+            const DBusString("desktop-startup-id"):
+                DBusVariant(DBusString(Platform.environment["DESKTOP_STARTUP_ID"] ?? "")),
+            const DBusString("activation-token"):
+                DBusVariant(DBusString(Platform.environment["XDG_ACTIVATION_TOKEN"] ?? "")),
+          },
+        )
+      ];
+      try {
+        await remoteObject.callMethod("org.freedesktop.Application", "Activate", params);
+      } on DBusMethodResponseException catch (e) {
+        return Result.error(StringError("dbus activation error: $e"));
+      }
+      await SystemNavigator.pop();
     } else {
       if (exec == null) {
-        return Result.error(
-          const StringError("invalid desktop: no exec found when dBusActivable is false"),
-        );
+        const error = StringError("invalid desktop: no exec found when dBusActivable is false");
+        return Result.error(error);
       }
-      Process.start(exec!, [""], mode: ProcessStartMode.detached);
+      final (cmd, args) = parseExec(exec!);
+      await Process.start(cmd, args, mode: ProcessStartMode.detached);
+      await SystemNavigator.pop();
     }
     return Result.success(Void());
+  }
+}
+
+enum _ParsingExecState {
+  insideQuotes,
+  inSpace,
+  inWord,
+}
+
+(String, List<String>) parseExec(String exec) {
+  assert(exec != "");
+  List<String> arguments = [];
+
+  int start = 0;
+  var state = _ParsingExecState.inSpace;
+  for (int i = 0; i < exec.length; i++) {
+    final char = exec[i];
+    switch (state) {
+      case _ParsingExecState.inSpace:
+        if (char == '"') {
+          start = i + 1;
+          state = _ParsingExecState.insideQuotes;
+        } else if (isPrintableAndNotSpace(char)) {
+          start = i;
+          state = _ParsingExecState.inWord;
+        }
+      case _ParsingExecState.insideQuotes:
+        // if char is quotes and the previous char is not backslash
+        if (char == '"' && !(i > 0 && exec[i - 1] == "\\")) {
+          if (i > start) {
+            arguments.add(exec.substring(start, i));
+          }
+          state = _ParsingExecState.inSpace;
+        }
+      case _ParsingExecState.inWord:
+        if (char == " ") {
+          if (i > start) {
+            arguments.add(exec.substring(start, i));
+          }
+          state = _ParsingExecState.inSpace;
+        }
+    }
+  }
+  final last = exec.substring(start, exec.length).trim();
+  if (last.isNotEmpty) {
+    arguments.add(last);
+  }
+  arguments = arguments.map((e) {
+    // match %u but not %%u. This is intended because %% is escaping the %
+    e = e.replaceAll(RegExp("[^%]{0,1}%[a-zA-Z]"), "");
+    e = e.replaceAll("%%", "%");
+    return e;
+  }).toList();
+  arguments = arguments.where((e) => e != "--" && e.isNotEmpty).toList();
+  assert(arguments.isNotEmpty, "empty command while parsing $exec");
+  if (arguments.length > 1) {
+    return (arguments[0], arguments.sublist(1));
+  } else {
+    return (arguments[0], []);
   }
 }
 
@@ -284,18 +371,6 @@ String? searchIcon(String iconpath) {
     _searchIconCache[iconpath] = (result.value,);
     return result.value;
   }
-}
-
-/// Returns all the places where icons *could* reside. These directories might
-/// not actually exist.
-Iterable<String> _getIconBaseDirectories() sync* {
-  String? home = Platform.environment['HOME'];
-
-  if (home != null) {
-    yield path.join(home, '.icons');
-  }
-  yield* getDataDirectories().map((dir) => path.join(dir, 'icons'));
-  yield '/usr/share/pixmaps';
 }
 
 /// Filters out filesystem entities that don't exist.

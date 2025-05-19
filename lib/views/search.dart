@@ -104,10 +104,11 @@ class _SearchApplicationState extends State<SearchApplication> {
                   enabled: true,
                   focusNode: focusNodes[index],
                   onTap: () async {
-                    setState(() {
-                      focusNodes[index].requestFocus();
-                    });
                     (await database).increaseExecCounter(app);
+                    final result = await app.run();
+                    if (result.isError()) {
+                      print(result.unsafeGetError().error());
+                    }
                   },
                   hoverColor: theme.hoverColor,
                 );

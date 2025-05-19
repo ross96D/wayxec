@@ -123,3 +123,29 @@ String expandEnvironmentVariables(String path) {
     return Platform.environment[env] ?? '';
   });
 }
+
+bool isPrintableAndNotSpace(String char) {
+  assert(char.isNotEmpty);
+  assert(char.length == 1);
+
+  final codePoint = char.codeUnitAt(0);
+
+  // C0 controls and DEL (0x00-0x1F, 0x7F) // check for 32 because is space
+  if (codePoint <= 32 || codePoint == 127) return false;
+
+  // C1 controls (0x80-0x9F)
+  if (codePoint >= 128 && codePoint <= 159) return false;
+
+  // Dont allow space
+  if (codePoint == 160) return false;
+
+  // Additional control characters (e.g., line/paragraph separators, formatting)
+  if ((codePoint >= 0x2028 && codePoint <= 0x2029) || // Line/Paragraph separators
+      (codePoint >= 0x200B && codePoint <= 0x200F) || // Zero-width spaces
+      (codePoint >= 0x2060 && codePoint <= 0x2064) || // Invisible formatting
+      (codePoint >= 0x2066 && codePoint <= 0x2069)) { // Bidirectional controls
+    return false;
+  }
+
+  return true;
+}
