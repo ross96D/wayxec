@@ -1,5 +1,8 @@
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
@@ -33,7 +36,4 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
-          name: test_release
           artifacts: wayxec-x86_64.AppImage
-          tag: test_release
