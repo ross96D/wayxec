@@ -45,20 +45,30 @@ class _SearchApplicationState extends State<SearchApplication> {
     super.dispose();
   }
 
+  Future<void> _runApp(Application app) async {
+    (await database).increaseExecCounter(app);
+    final result = await app.run();
+    if (result.isError()) {
+      print(result.unsafeGetError().error());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return RawKeyboardListener(
       focusNode: keyboardFocusNode,
-      onKey: (value) {
+      onKey: (value) async {
         if (textFocusNode.hasFocus) {
           if (value.physicalKey == PhysicalKeyboardKey.arrowDown && filtered.isNotEmpty) {
             setState(() {
               focusNodes[0].requestFocus();
             });
+          } else if (value.physicalKey == PhysicalKeyboardKey.enter && filtered.isNotEmpty) {
+            _runApp(filtered[0]);
           }
         } else {
-          if (value.character != null) {
+          if (value.character != null && value.physicalKey != PhysicalKeyboardKey.enter) {
             textFocusNode.requestFocus();
           }
         }
@@ -120,13 +130,7 @@ class _SearchApplicationState extends State<SearchApplication> {
                       : null,
                   enabled: true,
                   focusNode: focusNodes[index],
-                  onTap: () async {
-                    (await database).increaseExecCounter(app);
-                    final result = await app.run();
-                    if (result.isError()) {
-                      print(result.unsafeGetError().error());
-                    }
-                  },
+                  onTap: () => _runApp(app),
                   hoverColor: theme.hoverColor,
                 );
               },
