@@ -3,6 +3,11 @@
 # the plugin to fail to compile for some customers of the plugin.
 cmake_minimum_required(VERSION 3.15)
 
+# Enforce relative paths in build commands
+set(CMAKE_USE_RELATIVE_PATHS ON)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "$ORIGIN")  # Linux
+
 project(rresvg_library VERSION 0.0.1 LANGUAGES C)
 
 # Add Corrosion
@@ -17,7 +22,7 @@ FetchContent_MakeAvailable(Corrosion)
 # Import Rust library
 corrosion_import_crate(
     MANIFEST_PATH ${CMAKE_CURRENT_SOURCE_DIR}/resvg/crates/c-api/Cargo.toml
-    CRATE_TYPES staticlib  # For C-ABI compatible shared library
+    CRATE_TYPES cdylib  # For C-ABI compatible shared library
 )
 
 add_library(rresvg SHARED

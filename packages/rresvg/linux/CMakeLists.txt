@@ -18,5 +18,6 @@ set(rresvg_bundled_libraries
   # Defined in ../src/CMakeLists.txt.
   # This can be changed to accommodate different builds.
   $<TARGET_FILE:rresvg>
+  "${CMAKE_CURRENT_BINARY_DIR}/shared/libresvg.so"
   PARENT_SCOPE
 )
