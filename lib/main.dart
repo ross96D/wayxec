@@ -15,12 +15,15 @@ void main() async {
   apps = loadApplications(await database);
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
+  // with this 2 methods you can use a normal window instead of the layer shell protocol
+  // await shell.showWindow((400, 400));
+  // await shell.setUnresizable();
   final isSupported = await shell.initialize(400, 400);
   if (!isSupported) {
     throw StateError("Unsupported layer shell protocol");
   }
   await shell.setLayer(ShellLayer.layerTop);
-  await switch(kDebugMode) {
+  await switch (kDebugMode) {
     true => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand),
     false => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeExclusive),
   };

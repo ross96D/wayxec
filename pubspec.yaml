@@ -24,7 +24,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  wayland_layer_shell: ^1.0.1
+  # wayland_layer_shell: ^1.0.1
+  wayland_layer_shell:
+    path: ./packages/wayland_layer_shell
   freedesktop_desktop_entry:
     path: ./packages/freedesktop_desktop_entry
   icon_lookup:

@@ -44,6 +44,33 @@ static FlMethodResponse *is_supported(WaylandLayerShellPlugin *self)
   return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
 }
 
+// Hint to the compositor that we dont want to resize, this allows correct behaivour in tiling wm
+static FlMethodResponse *set_unresizable(WaylandLayerShellPlugin *self) {
+  GtkWindow *gtk_window = get_window(self);
+  gtk_window_set_resizable(gtk_window, FALSE);
+  
+  g_autoptr(FlValue) result;
+  result = fl_value_new_bool(true);
+  return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+}
+
+
+// In the case we dont want to use layer shell protocol, we will need this method to show the window
+static FlMethodResponse *show_window(WaylandLayerShellPlugin *self, FlValue *args) {
+  GtkWindow *gtk_window = get_window(self);
+  gtk_widget_show(GTK_WIDGET(gtk_window));  
+
+  int width = fl_value_get_int(fl_value_lookup_string(args, "width"));
+  int height = fl_value_get_int(fl_value_lookup_string(args, "height"));
+  if (width != 0 && height != 0) {
+    gtk_widget_set_size_request(GTK_WIDGET(gtk_window), width, height);
+  }
+  
+  g_autoptr(FlValue) result;
+  result = fl_value_new_bool(true);
+  return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+}
+
 static FlMethodResponse *initialize(WaylandLayerShellPlugin *self, FlValue *args)
 {
   g_autoptr(FlValue) result;
@@ -264,6 +291,14 @@ static void wayland_layer_shell_plugin_handle_method_call(
   else if (strcmp(method, "getKeyboardMode") == 0)
   {
     response = get_keyboard_mode(self);
+  }
+  else if (strcmp(method, "showWindow") == 0)
+  {
+    response = show_window(self, args);
+  }
+  else if (strcmp(method, "setUnresizable") == 0)
+  {
+    response = set_unresizable(self);
   }
   else
   {
