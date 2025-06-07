@@ -3,19 +3,14 @@ import 'package:test/test.dart';
 
 void main() {
   group('A group of tests', () {
-    final damerauLevenshtein = optimalStringAlignmentDistance;
-    final _ = diceCoefficient;
-
-    setUp(() {
-      // Additional setup goes here.
-    });
+    final damerauLevenshtein = DamerauLevenshtein();
 
     test('Case sensitive', () {
-      expect(damerauLevenshtein('casa', 'Casa', ignoreCase: false), 1);
+      expect(damerauLevenshtein.similarity('casa', 'Casa'), 1);
     });
 
     test('Case insensitive', () {
-      expect(damerauLevenshtein('casa', 'Casa', ignoreCase: true), 0);
+      expect(damerauLevenshtein.similarityIgnoreCase('casa', 'Casa'), 0);
     });
   });
 }

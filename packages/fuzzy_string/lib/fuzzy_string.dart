@@ -1,11 +1,8 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// Fuzzy string matchers
 library fuzzy_string;
 
-export 'src/damerau_levenshtein.dart';
-export 'src/dice_coeficient.dart';
-// export 'src/extensions/dice_extensions.dart';
-export 'src/extensions/damerau_extensions.dart';
+export 'src/matcher.dart';
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/algs/damerau_levenshtein.dart';
+export 'src/algs/dice_coeficient.dart';
+export 'src/algs/smith_waterman.dart';

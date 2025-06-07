@@ -25,6 +25,8 @@ class _SearchApplicationState extends State<SearchApplication> {
   final focusNodes = <FocusNode>[];
   late List<Application> filtered;
 
+  static const _matcher = fuzzy.SmithWaterman();
+
   @override
   void initState() {
     super.initState();
@@ -82,18 +84,22 @@ class _SearchApplicationState extends State<SearchApplication> {
               autofocus: true,
               controller: textController,
               decoration: const InputDecoration(
-                contentPadding: EdgeInsets.all(2.0),
+                contentPadding: EdgeInsets.all(5.0),
               ),
               onChanged: (v) {
                 setState(() {
                   if (v.isEmpty) {
                     filtered = widget.apps;
                   } else {
-                    filtered = widget.apps.where((element) {
-                      // TODO improve the matching alghoritm (match parts)
-                      final end = min(v.length, element.name.length);
-                      return element.name.substring(0, end).similarityTo(v, ignoreCase: true) > 0.5;
-                    }).toList();
+                    final scores = widget.apps
+                      .map((e) {
+                        return (e, e.name.similarityScoreTo(v, ignoreCase: true, matcher: _matcher));
+                      })
+                      .where((e) => e.$2 > 0.5)
+                      .toList();
+                    scores.sort((a, b) => b.$2.compareTo(a.$2));
+                    
+                    filtered = scores.map((e) => e.$1).toList();
                   }
                 });
               },

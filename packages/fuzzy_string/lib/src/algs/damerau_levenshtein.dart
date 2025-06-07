@@ -1,21 +1,21 @@
 import 'dart:math';
 
-/// Optimal String Alignment Score
-///
-/// Is a Damerau-Levenshtein distance alghoritm but is not allowed to apply
-/// multiple transformations on a same substring.
-/// 
-/// The result is transformed into an score of 0 to 1. Been 1 the highest
-/// similarity
-///
-/// See: https://stats.stackexchange.com/a/467772
-double optimalStringAlignmentScore(String s1, String s2, {
-  bool ignoreCase = false,
-}) {
-  var averageLenght = (s1.length + s2.length) / 2;
-  var distance = optimalStringAlignmentDistance(s1, s2, ignoreCase: ignoreCase);
-  var result = (averageLenght - distance > 0 ? averageLenght - distance : 0) / averageLenght;
-  return result;
+import 'package:fuzzy_string/src/matcher.dart';
+
+class DamerauLevenshtein extends FuzzyStringMatcher {
+  const DamerauLevenshtein();
+
+  @override
+  int similarity(String s1, String s2) {
+    return optimalStringAlignmentDistance(s1, s2);
+  }
+  
+  @override
+  double normalSimilarity(String s1, String s2) {
+    final averageLenght = (s1.length + s2.length) / 2;
+    final distance = optimalStringAlignmentDistance(s1, s2);
+    return (averageLenght - distance > 0 ? averageLenght - distance : 0) / averageLenght;
+  }
 }
 
 /// Optimal String Alignment Distance
