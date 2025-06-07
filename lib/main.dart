@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:args/args.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,22 +14,34 @@ late Future<List<Application>> apps;
 
 bool firstBuild = true;
 
-void main() async {
+void main(List<String> args) async {
   apps = loadApplications(await database);
+
+  final cliparser = ArgParser()
+    ..addFlag("normal-window",
+        help: "run as a normal window instead of using the layer shell protocol");
+  final results = cliparser.parse(args);
+  final normalWindow = results["normal-window"] as bool?;
+
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
-  // with this 2 methods you can use a normal window instead of the layer shell protocol
-  // await shell.showWindow((400, 400));
-  // await shell.setUnresizable();
-  final isSupported = await shell.initialize(400, 400);
-  if (!isSupported) {
-    throw StateError("Unsupported layer shell protocol");
+
+  if (normalWindow != null && normalWindow) {
+    await shell.setUnresizable();
+    await shell.showWindow((400, 400));
+  } else {
+    final isSupported = await shell.initialize(400, 400);
+    if (isSupported) {
+      await shell.setLayer(ShellLayer.layerTop);
+      await switch (kDebugMode) {
+        true => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand),
+        false => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeExclusive),
+      };
+    } else {
+      await shell.showWindow((400, 400));
+      await shell.setUnresizable();
+    }
   }
-  await shell.setLayer(ShellLayer.layerTop);
-  await switch (kDebugMode) {
-    true => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand),
-    false => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeExclusive),
-  };
   runApp(const MyApp());
 }
 

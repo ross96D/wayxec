@@ -39,6 +39,7 @@ dependencies:
   sembast: ^3.6.0
   json_annotation: ^4.9.0
   dbus: ^0.7.11
+  args: ^2.5.0
 
 dev_dependencies:
   flutter_test:

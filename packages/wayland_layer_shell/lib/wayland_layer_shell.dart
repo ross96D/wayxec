@@ -17,13 +17,13 @@ class WaylandLayerShell {
     return await methodChannel.invokeMethod('isSupported');
   }
 
-  // Hint to the compositor that we dont want to resize, this allows correct behaivour in tiling wm
+  /// Hint to the compositor that we dont want to resize, this allows correct behaivour in tiling wm
   Future<bool> setUnresizable() async {
     return await methodChannel.invokeMethod('setUnresizable');
   }
 
 
-  // In the case we dont want to use layer shell protocol, we will need this method to show the window
+  /// In the case we dont want to use layer shell protocol, we will need this method to show the window
   Future<bool> showWindow([(int width, int height)? size]) async {
     final Map<String, dynamic> arguments = {
       'width': size?.$1 ?? 0,
