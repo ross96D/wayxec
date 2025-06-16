@@ -11,7 +11,8 @@ jobs:
   build-appimage:
     runs-on: "ubuntu-latest"
     steps:
-      - run: sudo apt-get install libgtk-3-dev libgtk-layer-shell-dev
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y libgtk-3-dev libgtk-layer-shell-dev
 
       - name: Checkout
         uses: actions/checkout@v4
