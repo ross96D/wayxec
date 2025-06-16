@@ -23,17 +23,17 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2.13.0
         with:
-          flutter-version: "3.13.9"
+          flutter-version: "3.32.2"
           channel: "stable"
 
       - uses: moonrepo/setup-rust@v1
         with:
-          channel: '1.85.1'
-          
+          channel: "1.85.1"
+
       - run: flutter build linux
 
       - run: ./linux/create-appimage.sh
-      
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
