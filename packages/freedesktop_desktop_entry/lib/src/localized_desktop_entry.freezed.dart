@@ -168,7 +168,7 @@ class _$_LocalizedDesktopEntry extends _LocalizedDesktopEntry {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_LocalizedDesktopEntry &&

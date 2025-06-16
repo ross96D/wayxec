@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:wayxec/db/isolate_manager.dart';
 import 'package:wayxec/search_desktop.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:path/path.dart' as path;
 import 'package:wayxec/utils.dart';

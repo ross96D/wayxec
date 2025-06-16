@@ -183,7 +183,7 @@ class RsvgMessenger extends IsolateResponse {
     await _send(Destroy(receiver.sendPort, resvgID));
   }
 
-  static var _renderCache = <_SizeKey, ui.Image>{};
+  static final _renderCache = <_SizeKey, ui.Image>{};
   Future<ui.Image?> render(int width, int height) async {
     final key = _SizeKey(width, height, filepath);
     if (_renderCache[key] != null) {

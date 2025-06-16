@@ -41,7 +41,7 @@ class IsolateManager<R, T> {
     return _IsolateInstance(isolate, stream, thisSendport, thisReceiver);
   }
 
-  static _isolateEntry<R, T>((SendPort isolateSender, FutureOr<R> Function(T) workFn) message) {
+  static void _isolateEntry<R, T>((SendPort isolateSender, FutureOr<R> Function(T) workFn) message) {
     final (sender, fn) = message;
     final receiver = ReceivePort();
     sender.send(receiver.sendPort);

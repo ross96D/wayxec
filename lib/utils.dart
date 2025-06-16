@@ -37,6 +37,7 @@ class Result<T extends Object, E extends Err> {
         _isSuccess = tag;
 
   @override
+  // ignore: hash_and_equals
   bool operator ==(Object other) {
     if (other is Result<T, E>) {
       return other._isSuccess == _isSuccess && other._value == _value;

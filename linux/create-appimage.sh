@@ -25,4 +25,4 @@ Categories=Utility;
 mv AppDir/wayxec AppDir/AppRun
 touch AppDir/placeholder.svg
 
-$APPIMAGETOOL AppDir
+$APPIMAGETOOL AppDir "$@"
