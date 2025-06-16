@@ -106,6 +106,14 @@ static FlMethodResponse *get_layer(WaylandLayerShellPlugin *self)
   return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
 }
 
+static FlMethodResponse *set_namespace(WaylandLayerShellPlugin *self, FlValue *args)
+{
+  const gchar *layer_namespace = fl_value_get_string(fl_value_lookup_string(args, "namespace"));
+  gtk_layer_set_namespace(get_window(self), layer_namespace);
+  g_autoptr(FlValue) result = fl_value_new_bool(true);
+  return FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+}
+
 static FlMethodResponse *get_monitor_list(WaylandLayerShellPlugin *self)
 {
   GdkDisplay *display = gdk_display_get_default();
@@ -295,6 +303,10 @@ static void wayland_layer_shell_plugin_handle_method_call(
   else if (strcmp(method, "showWindow") == 0)
   {
     response = show_window(self, args);
+  }
+  else if (strcmp(method, "setNamespace") == 0)
+  {
+    response = set_namespace(self, args);
   }
   else if (strcmp(method, "setUnresizable") == 0)
   {

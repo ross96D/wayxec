@@ -37,6 +37,7 @@ void main(List<String> args) async {
         true => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeOnDemand),
         false => shell.setKeyboardMode(ShellKeyboardMode.keyboardModeExclusive),
       };
+      await shell.setNamesapce("wayxec");
     } else {
       await shell.showWindow((400, 400));
       await shell.setUnresizable();
@@ -63,11 +64,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple)
+        .copyWith(surface: Colors.transparent, background: Colors.transparent);
     final colorSchemeDark = ColorScheme.fromSeed(
       seedColor: Colors.deepPurple,
       brightness: Brightness.dark,
-    );
+    ).copyWith(surface: Colors.transparent, background: Colors.transparent);
 
     return MaterialApp(
       title: 'Flutter Demo',

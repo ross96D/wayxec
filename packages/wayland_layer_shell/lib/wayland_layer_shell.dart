@@ -70,6 +70,13 @@ class WaylandLayerShell {
         .values[(await methodChannel.invokeMethod('getLayer')) as int];
   }
 
+  Future<void> setNamesapce(String namespace) async {
+    final Map<String, dynamic> arguments = {
+      'namespace': namespace,
+    };
+    return await methodChannel.invokeMethod('setNamespace', arguments);
+  }
+
   /// Returns: the list of all [Monitor]s connected to the computer.
   Future<List<Monitor>> getMonitorList() async {
     List<String> monitors =
