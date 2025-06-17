@@ -64,12 +64,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple)
-        .copyWith(surface: Colors.transparent, background: Colors.transparent);
-    final colorSchemeDark = ColorScheme.fromSeed(
+    var colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple)
+        .copyWith(surface: Colors.transparent);
+    var colorSchemeDark = ColorScheme.fromSeed(
       seedColor: Colors.deepPurple,
       brightness: Brightness.dark,
-    ).copyWith(surface: Colors.transparent, background: Colors.transparent);
+    );
+    colorSchemeDark = colorSchemeDark.copyWith(surface: colorSchemeDark.surface.withAlpha(140));
 
     return MaterialApp(
       title: 'Flutter Demo',
@@ -116,3 +117,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
