@@ -220,6 +220,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
         child: Column(
           children: [
             TextFormField(
+              autofocus: true,
               decoration: const InputDecoration(
                 contentPadding: EdgeInsets.all(5.0),
               ),
