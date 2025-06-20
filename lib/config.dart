@@ -60,6 +60,35 @@ final class Configuration {
 enum Gravity {
   fatal,
   warn,
+  none,
+}
+
+final class ConfigurationParsingErrorList extends Err {
+  final List<ConfigurationParsingError> errors;
+
+  const ConfigurationParsingErrorList(this.errors);
+
+  Gravity get gravity {
+    if (errors.isEmpty) {
+      return Gravity.none;
+    }
+    for (final e in errors) {
+      if (e.gravity == Gravity.fatal) {
+        return Gravity.fatal;
+      }
+    }
+    return Gravity.warn;
+  }
+
+  @override
+  String error() {
+    final buffer = StringBuffer();
+    for (final e in errors) {
+      buffer.write(e.error());
+      buffer.write("\n");
+    }
+    return buffer.toString();
+  }
 }
 
 sealed class ConfigurationParsingError extends Err {
@@ -124,7 +153,7 @@ class EmptyValue extends LineParsingError {
   String error() => "empty value in line $lineNumber";
 }
 
-(Configuration, List<ConfigurationParsingError>) parseConfig(String configuration) {
+(Configuration, ConfigurationParsingErrorList) parseConfig(String configuration) {
   final lines = configuration.split("\n");
 
   Configuration response = Configuration();
@@ -144,7 +173,7 @@ class EmptyValue extends LineParsingError {
     );
   }
 
-  return (response, errors);
+  return (response, ConfigurationParsingErrorList(errors));
 }
 
 

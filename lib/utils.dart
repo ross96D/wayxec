@@ -150,3 +150,29 @@ bool isPrintableAndNotSpace(String char) {
 
   return true;
 }
+
+
+final class Get {
+  static final Get _instance = Get._();
+
+  static Get get instance => _instance;
+
+  factory Get() => _instance;
+
+  Get._();
+
+  final Map<Type, Object> _register = {};
+
+  void register<T extends Object>(T instance) {
+    _register[T] = instance;
+  }
+
+  T get<T extends Object>() {
+    assert(_register[T] != null, "access type $T that is not registered");
+    return _register[T] as T;
+  }
+
+  T call<T extends Object> () {
+    return get<T>();
+  }
+}
