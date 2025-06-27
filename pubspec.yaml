@@ -35,6 +35,8 @@ dependencies:
     path: ./packages/rresvg
   fuzzy_string:
     path: ./packages/fuzzy_string
+  config:
+    path: ./packages/config.dart
   path: ^1.8.3
   sembast: ^3.6.0
   json_annotation: ^4.9.0
