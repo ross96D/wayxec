@@ -47,6 +47,7 @@ Widget _renderOption(BuildContext context, Application app, SearchOptionsRenderC
       softWrap: false,
       overflow: TextOverflow.fade,
     ),
+    onTap: () => _runApp(app),
     subtitle: app.comment != null
         ? Text(
             app.comment!,
