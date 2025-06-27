@@ -1,0 +1,3 @@
+[submodule "packages/config.dart"]
+	path = packages/config.dart
+	url = git@github.com:ross96D/config.dart
