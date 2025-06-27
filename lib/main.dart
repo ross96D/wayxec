@@ -1,36 +1,72 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wayxec/config.dart';
 import 'package:wayxec/db/db.dart';
+import 'package:wayxec/logger.dart';
 import 'package:wayxec/search_desktop.dart';
+import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/search.dart';
 import 'package:wayland_layer_shell/types.dart';
 import 'package:wayland_layer_shell/wayland_layer_shell.dart' as wl_shell;
+import 'package:path/path.dart' as path;
 
 late Future<List<Application>> apps;
 
 bool firstBuild = true;
 
+void loadConfig([String? filepath]) {
+  final configDir =
+      Platform.environment["XDG_CONFIG_HOME"] ?? expandEnvironmentVariables(r"$HOME/.config");
+  filepath ??= path.joinAll([configDir, "wayxec", "config"]);
+  logger.d("configuration file path: $filepath");
+
+  final configfile = File(filepath);
+  final (config, errors) = parseConfig(configfile);
+  switch (errors?.gravity) {
+    case Gravity.fatal:
+      errors!.log(logger);
+      exit(1); // TODO.. should we exit with SystemNavigator.pop or with exit(1)?
+    case Gravity.warn:
+      errors!.log(logger);
+    case Gravity.none:
+    case null:
+  }
+  logger.d(config.width);
+  logger.d(config.height);
+  Get.instance.register(config);
+}
+
 void main(List<String> args) async {
-  apps = loadApplications(await database);
+  initLogger();
 
   final cliparser = ArgParser()
     ..addFlag("normal-window",
-        help: "run as a normal window instead of using the layer shell protocol");
+        help: "run as a normal window instead of using the layer shell protocol")
+    ..addOption("config",
+        help: "configuration file location. Default is XDG_CONFIG_HOME/wayxec/config");
   final results = cliparser.parse(args);
   final normalWindow = results["normal-window"] as bool?;
+  final configFilePath = results["config"] as String?;
+
+  apps = loadApplications(await database);
+
+  loadConfig(configFilePath);
 
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
 
+  final width = Get.instance<Configuration>().width.toInt();
+  final height = Get.instance<Configuration>().height.toInt();
   if (normalWindow != null && normalWindow) {
     await shell.setUnresizable();
-    await shell.showWindow((400, 400));
+    await shell.showWindow((width, height));
   } else {
-    final isSupported = await shell.initialize(400, 400);
+    final isSupported = await shell.initialize(width, height);
     if (isSupported) {
       await shell.setLayer(ShellLayer.layerTop);
       await switch (kDebugMode) {
@@ -39,7 +75,7 @@ void main(List<String> args) async {
       };
       await shell.setNamesapce("wayxec");
     } else {
-      await shell.showWindow((400, 400));
+      await shell.showWindow((width, height));
       await shell.setUnresizable();
     }
   }
@@ -64,21 +100,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var colorScheme = ColorScheme.fromSeed(seedColor: Colors.deepPurple)
-        .copyWith(surface: Colors.transparent);
     var colorSchemeDark = ColorScheme.fromSeed(
       seedColor: Colors.deepPurple,
       brightness: Brightness.dark,
     );
-    colorSchemeDark = colorSchemeDark.copyWith(surface: colorSchemeDark.surface.withAlpha(140));
+    colorSchemeDark = colorSchemeDark.copyWith(
+      surface: colorSchemeDark.surface.withValues(alpha: Get.instance<Configuration>().opacity),
+    );
 
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-      ),
       darkTheme: ThemeData(
         colorScheme: colorSchemeDark,
         useMaterial3: true,
@@ -117,4 +149,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:wayxec/db/db.dart';
+import 'package:wayxec/logger.dart';
 import 'package:wayxec/search_desktop.dart';
 import 'package:path/path.dart' as path;
 import 'package:rresvg/rresvg.dart';
@@ -46,6 +47,7 @@ Widget _renderOption(BuildContext context, Application app, SearchOptionsRenderC
       softWrap: false,
       overflow: TextOverflow.fade,
     ),
+    onTap: () => _runApp(app),
     subtitle: app.comment != null
         ? Text(
             app.comment!,
@@ -65,7 +67,7 @@ Future<void> _runApp(Application app) async {
   (await database).increaseExecCounter(app);
   final result = await app.run();
   if (result.isError()) {
-    print(result.unsafeGetError().error());
+    logger.e(result.unsafeGetError().error());
   }
 }
 

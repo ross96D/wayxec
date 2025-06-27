@@ -35,11 +35,15 @@ dependencies:
     path: ./packages/rresvg
   fuzzy_string:
     path: ./packages/fuzzy_string
+  config:
+    path: ./packages/config.dart
   path: ^1.8.3
   sembast: ^3.6.0
   json_annotation: ^4.9.0
   dbus: ^0.7.11
   args: ^2.5.0
+  logger: ^2.5.0
+  chalkdart: ^3.0.5
 
 dev_dependencies:
   flutter_test:

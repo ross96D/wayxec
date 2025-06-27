@@ -16,6 +16,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Add vendor libraries to resvg rust package
         run: ./install-resvg-vendor.sh

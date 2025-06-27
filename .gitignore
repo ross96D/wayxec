@@ -47,3 +47,5 @@ app.*.map.json
 AppDir
 .AppDir
 wayxec-x86_64.AppImage
+# configuration file for testing purpose
+config
