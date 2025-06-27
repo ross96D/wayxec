@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:config/config.dart';
+import 'package:logger/web.dart';
 
 final class _SetValuesUtility<T extends Object> {
   final String key;
@@ -20,7 +21,16 @@ final class Configuration {
   double _opacity;
   double get opacity => _opacity;
 
-  Configuration({double opacity = 1}) : _opacity = opacity;
+  double _width;
+  double get width => _width;
+
+  double _height;
+  double get height => _height;
+
+  Configuration({double opacity = 1, double width = 400, double height = 400})
+      : _opacity = opacity,
+        _width = width,
+        _height = height;
 
   List<ReadConfigError> _setValues(MapValue values) {
     final mapSetter = <_SetValuesUtility>[
@@ -34,6 +44,26 @@ final class Configuration {
           return null;
         },
       ),
+      _SetValuesUtility<double>(
+        "width",
+        (v) => _width = v,
+        (v) {
+          if (v < 200) {
+            return RangeValidationError<double>(start: 200, end: double.infinity, actual: v);
+          }
+          return null;
+        },
+      ),
+      _SetValuesUtility<double>(
+        "height",
+        (v) => _height = v,
+        (v) {
+          if (v < 200) {
+            return RangeValidationError<double>(start: 200, end: double.infinity, actual: v);
+          }
+          return null;
+        },
+      )
     ];
     final errors = <ReadConfigError>[];
 
@@ -89,30 +119,20 @@ final class Configuration {
 }
 
 enum Gravity {
-  fatal,
-  warn,
-  none;
+  fatal(10000),
+  warn(1000),
+  none(0);
+
+  final int _val;
+
+  const Gravity(this._val);
 
   bool operator <=(Gravity other) => compareTo(other) <= 0;
   bool operator >=(Gravity other) => compareTo(other) >= 0;
   bool operator <(Gravity other) => compareTo(other) < 0;
   bool operator >(Gravity other) => compareTo(other) > 0;
 
-  int compareTo(Gravity other) {
-    if (other == this) {
-      return 0;
-    }
-    if (this == fatal) {
-      return 1;
-    }
-    if (this == none) {
-      return -1;
-    }
-    if (other == none) {
-      return -1;
-    }
-    return 1;
-  }
+  int compareTo(Gravity other) => _val.compareTo(other._val);
 }
 
 class ReadConfigErrors {
@@ -130,6 +150,19 @@ class ReadConfigErrors {
     return gravity;
   }
 
+  void log(Logger logger) {
+    for (final error in errors) {
+      switch (error.gravity) {
+        case Gravity.fatal:
+          logger.e("Reading configuration error: $error");
+        case Gravity.warn:
+          logger.w("Reading configuration error: $error");
+        case Gravity.none:
+          logger.i("Reading configuration error: $error");
+      }
+    }
+  }
+
   @override
   String toString() {
     return "ReadConfigErrors:\n${errors.join("\n")}";
@@ -144,14 +177,26 @@ sealed class ReadConfigError {
 
 class MissingKeyError extends ReadConfigError {
   final String key;
+  final bool required;
 
-  const MissingKeyError(this.key) : super(Gravity.warn);
+  const MissingKeyError(this.key, [this.required = false])
+      : super(required ? Gravity.fatal : Gravity.warn);
+
+  @override
+  String toString() {
+    return "Missing ${required ? 'required ' : ''}key: $key";
+  }
 }
 
 class ValueNotUsed extends ReadConfigError {
   final String key;
 
   const ValueNotUsed(this.key) : super(Gravity.none);
+
+  @override
+  String toString() {
+    return "$key was found in the configuration but his value is not used";
+  }
 }
 
 class TypeError extends ReadConfigError {

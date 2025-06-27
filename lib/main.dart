@@ -19,48 +19,54 @@ late Future<List<Application>> apps;
 
 bool firstBuild = true;
 
-void loadConfig() {
+void loadConfig([String? filepath]) {
   final configDir =
       Platform.environment["XDG_CONFIG_HOME"] ?? expandEnvironmentVariables(r"$HOME/.config");
-  final filepath = path.joinAll([configDir, "wayxec", "config"]);
+  filepath ??= path.joinAll([configDir, "wayxec", "config"]);
   logger.d("configuration file path: $filepath");
 
   final configfile = File(filepath);
   final (config, errors) = parseConfig(configfile);
   switch (errors?.gravity) {
     case Gravity.fatal:
-      logger.f(errors.toString());
+      errors!.log(logger);
       exit(1); // TODO.. should we exit with SystemNavigator.pop or with exit(1)?
     case Gravity.warn:
-      logger.e(errors.toString());
+      errors!.log(logger);
     case Gravity.none:
     case null:
   }
-
+  logger.d(config.width);
+  logger.d(config.height);
   Get.instance.register(config);
 }
 
 void main(List<String> args) async {
   initLogger();
 
-  apps = loadApplications(await database);
-
-  loadConfig();
-
   final cliparser = ArgParser()
     ..addFlag("normal-window",
-        help: "run as a normal window instead of using the layer shell protocol");
+        help: "run as a normal window instead of using the layer shell protocol")
+    ..addOption("config",
+        help: "configuration file location. Default is XDG_CONFIG_HOME/wayxec/config");
   final results = cliparser.parse(args);
   final normalWindow = results["normal-window"] as bool?;
+  final configFilePath = results["config"] as String?;
+
+  apps = loadApplications(await database);
+
+  loadConfig(configFilePath);
 
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();
 
+  final width = Get.instance<Configuration>().width.toInt();
+  final height = Get.instance<Configuration>().height.toInt();
   if (normalWindow != null && normalWindow) {
     await shell.setUnresizable();
-    await shell.showWindow((400, 400));
+    await shell.showWindow((width, height));
   } else {
-    final isSupported = await shell.initialize(400, 400);
+    final isSupported = await shell.initialize(width, height);
     if (isSupported) {
       await shell.setLayer(ShellLayer.layerTop);
       await switch (kDebugMode) {
@@ -69,7 +75,7 @@ void main(List<String> args) async {
       };
       await shell.setNamesapce("wayxec");
     } else {
-      await shell.showWindow((400, 400));
+      await shell.showWindow((width, height));
       await shell.setUnresizable();
     }
   }
