@@ -1,13 +1,78 @@
 import 'dart:io';
 
 import 'package:config/config.dart';
-import 'package:wayxec/utils.dart';
+
+final class _SetValuesUtility<T extends Object> {
+  final String key;
+
+  final ValidationError? Function(T)? _validator;
+  ValidationError? validator(Object v) => _validator != null ? _validator!(v as T) : null;
+
+  final void Function(T) _setter;
+  void setter(Object v) => _setter(v as T);
+
+  Type get type => T;
+
+  _SetValuesUtility(this.key, this._setter, [this._validator]);
+}
 
 final class Configuration {
   double _opacity;
   double get opacity => _opacity;
 
   Configuration({double opacity = 1}) : _opacity = opacity;
+
+  List<ReadConfigError> _setValues(MapValue values) {
+    final mapSetter = <_SetValuesUtility>[
+      _SetValuesUtility<double>(
+        "opacity",
+        (v) => _opacity = v,
+        (v) {
+          if (v > 1 || v < 0) {
+            return RangeValidationError<double>(start: 0, end: 1, actual: v);
+          }
+          return null;
+        },
+      ),
+    ];
+    final errors = <ReadConfigError>[];
+
+    for (final entry in mapSetter) {
+      final key = entry.key;
+      final type = entry.type;
+
+      final val = values[key];
+      if (val != null) {
+        if (val.value.runtimeType == type) {
+          final error = entry.validator(val.value);
+          if (error == null) {
+            entry.setter(val.value);
+          } else {
+            errors.add(error);
+          }
+        } else {
+          errors.add(TypeError(key, type, val.value.runtimeType));
+        }
+      } else {
+        errors.add(MissingKeyError(key));
+      }
+    }
+
+    for (final key in values.value.keys) {
+      bool contains = false;
+      for (final e in mapSetter) {
+        if (e.key == key) {
+          contains = true;
+          break;
+        }
+      }
+      if (!contains) {
+        errors.add(ValueNotUsed(key));
+      }
+    }
+
+    return errors;
+  }
 
   @override
   bool operator ==(covariant Configuration other) {
@@ -64,13 +129,65 @@ class ReadConfigErrors {
     }
     return gravity;
   }
+
+  @override
+  String toString() {
+    return "ReadConfigErrors:\n${errors.join("\n")}";
+  }
 }
 
-class ReadConfigError {
+sealed class ReadConfigError {
   final Gravity gravity;
-  final String message;
 
-  const ReadConfigError(this.gravity, this.message);
+  const ReadConfigError(this.gravity);
+}
+
+class MissingKeyError extends ReadConfigError {
+  final String key;
+
+  const MissingKeyError(this.key) : super(Gravity.warn);
+}
+
+class ValueNotUsed extends ReadConfigError {
+  final String key;
+
+  const ValueNotUsed(this.key) : super(Gravity.none);
+}
+
+class TypeError extends ReadConfigError {
+  final String key;
+  final Type expectedType;
+  final Type gotType;
+
+  const TypeError(this.key, this.expectedType, this.gotType) : super(Gravity.warn);
+}
+
+sealed class ValidationError extends ReadConfigError {
+  const ValidationError() : super(Gravity.warn);
+}
+
+class RangeValidationError<T extends Comparable> extends ValidationError {
+  final T start;
+  final T end;
+  final T actual;
+
+  const RangeValidationError({required this.start, required this.end, required this.actual});
+
+  @override
+  String toString() {
+    return "Range validation error. Expected to be between $start and $end but got $actual";
+  }
+}
+
+class ConfigurationParseError extends ReadConfigError {
+  final ParseError error;
+
+  const ConfigurationParseError(this.error) : super(Gravity.fatal);
+
+  @override
+  String toString() {
+    return "Configuration parsing $error";
+  }
 }
 
 (Configuration, ReadConfigErrors?) parseConfig(File file) {
@@ -78,9 +195,29 @@ class ReadConfigError {
 
   final (values, errors) = ConfigurationParser.parseFromFile(file);
   if (errors != null) {
-    return (
-      config,
-      ReadConfigErrors(errors.map((e) => ReadConfigError(Gravity.fatal, e.toString())).toList())
-    );
+    assert(errors.isNotEmpty);
+    return (config, ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
   }
+  assert(values != null);
+  final setErrors = config._setValues(values!);
+  return (
+    config,
+    setErrors.isNotEmpty ? ReadConfigErrors(setErrors) : null,
+  );
+}
+
+(Configuration, ReadConfigErrors?) parseConfigFromString(String content) {
+  final config = Configuration();
+
+  final (values, errors) = ConfigurationParser.parseFromString(content);
+  if (errors != null) {
+    assert(errors.isNotEmpty);
+    return (config, ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
+  }
+  assert(values != null);
+  final setErrors = config._setValues(values!);
+  return (
+    config,
+    setErrors.isNotEmpty ? ReadConfigErrors(setErrors) : null,
+  );
 }

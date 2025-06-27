@@ -26,20 +26,15 @@ void loadConfig() {
   logger.d("configuration file path: $filepath");
 
   final configfile = File(filepath);
-  final String configstr = switch (configfile.existsSync()) {
-    true => configfile.readAsStringSync(),
-    false => "",
-  };
-  logger.d("configuration: $configstr");
-
-  final (config, errors) = parseConfig(configstr);
-  switch (errors.gravity) {
+  final (config, errors) = parseConfig(configfile);
+  switch (errors?.gravity) {
     case Gravity.fatal:
-      logger.f(errors.error());
+      logger.f(errors.toString());
       exit(1); // TODO.. should we exit with SystemNavigator.pop or with exit(1)?
     case Gravity.warn:
-      logger.e(errors.error());
+      logger.e(errors.toString());
     case Gravity.none:
+    case null:
   }
 
   Get.instance.register(config);
