@@ -39,8 +39,9 @@ class SearchApplication extends StatelessWidget {
 
 Widget _renderOption(BuildContext context, Application app, SearchOptionsRenderConfig config) {
   final theme = Theme.of(context);
+  print (app.icon);
   return ListTile(
-    leading: app.icon != null ? _FutureIcon(app.icon!) : null,
+    leading: app.icon != null ? _FutureIcon(app.icon!) : SizedBox(width: 35,),
     title: Text(
       app.name,
       style: theme.textTheme.bodyLarge,
@@ -80,7 +81,7 @@ class _FutureIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (filepath == null) {
-      return const SizedBox.shrink();
+      return const SizedBox(width: 35,);
     }
     if (path.extension(filepath!) == ".svg") {
       return SvgView(
