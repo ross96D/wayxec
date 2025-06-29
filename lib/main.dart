@@ -36,8 +36,6 @@ void loadConfig([String? filepath]) {
     case Gravity.none:
     case null:
   }
-  logger.d(config.width);
-  logger.d(config.height);
   Get.instance.register(config);
 }
 
@@ -56,6 +54,9 @@ void main(List<String> args) async {
   apps = loadApplications(await database);
 
   loadConfig(configFilePath);
+
+  logger.i("set log level to ${Get.instance<Configuration>().logLevel}");
+  setLogLevel(Get.instance<Configuration>().logLevel);
 
   WidgetsFlutterBinding.ensureInitialized();
   final shell = wl_shell.WaylandLayerShell();

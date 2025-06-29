@@ -4,6 +4,7 @@ import 'package:chalkdart/chalkdart.dart';
 import 'package:logger/logger.dart' hide PrettyPrinter;
 
 Logger? _logger;
+Filter? _filter;
 
 Logger get logger {
   assert(_logger != null, "you forgot to initialize logger");
@@ -15,12 +16,17 @@ void initLogger({
   LogOutput? output,
 }) {
   output ??= ConsoleOutput();
+  _filter = Filter(level: minLevel);
   final log = Logger(
-    filter: Filter(level: minLevel),
+    filter: _filter,
     output: ConsoleOutput(),
     printer: PrettyPrinter(),
   );
   _logger = log;
+}
+
+void setLogLevel(Level level) {
+  _filter!.level = level;
 }
 
 class Filter extends LogFilter {
