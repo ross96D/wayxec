@@ -112,10 +112,10 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
 
 Future<List<Application>> loadApplications(MDatabase db) async {
   var list = await db.getAll();
-  final map = Map.fromEntries(list.map((e) => MapEntry(e.filepath, e)));
+  final map = Map.fromEntries(list.map((e) => MapEntry(e.name, e)));
   final apps = await loadApplicationsFromDisk(map);
   for (final app in apps) {
-    final old = map[app.filepath];
+    final old = map[app.name];
     if (old != null && old.lastModified == app.lastModified) {
       continue;
     }

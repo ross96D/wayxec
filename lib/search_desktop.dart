@@ -164,12 +164,7 @@ class Application {
   }
 
   @override
-  bool operator ==(Object other) {
-    if (other is! Application) {
-      return false;
-    }
-    return other.filepath == filepath;
-  }
+  bool operator ==(covariant Application other) => other.name == name;
 
   @override
   int get hashCode => filepath.hashCode;
