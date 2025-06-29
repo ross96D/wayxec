@@ -27,10 +27,37 @@ final class Configuration {
   double _height;
   double get height => _height;
 
+  Level _logLevel;
+  Level get logLevel => _logLevel;
+  static const _levels = <String, Level>{
+    "trace": Level.trace,
+    "debug": Level.debug,
+    "info": Level.info,
+    "warning": Level.warning,
+    "error": Level.error,
+    "fatal": Level.fatal,
+  };
+  void _setLogLevel(String levelstr) {
+    final level = _levels[levelstr.toLowerCase()];
+    if (level != null) {
+      _logLevel = level;
+    }
+  }
+
+  ExepectedValidationError? _validateLogLevel(String levelstr) {
+    final level = _levels[levelstr.toLowerCase()];
+    if (level == null) {
+      return ExepectedValidationError(levelstr, _levels.keys.toList());
+    } else {
+      return null;
+    }
+  }
+
   Configuration({double opacity = 1, double width = 400, double height = 400})
       : _opacity = opacity,
         _width = width,
-        _height = height;
+        _height = height,
+        _logLevel = Level.info;
 
   List<ReadConfigError> _setValues(MapValue values) {
     final mapSetter = <_SetValuesUtility>[
@@ -63,6 +90,11 @@ final class Configuration {
           }
           return null;
         },
+      ),
+      _SetValuesUtility<String>(
+        "logging_level",
+        _setLogLevel,
+        _validateLogLevel,
       )
     ];
     final errors = <ReadConfigError>[];
@@ -78,7 +110,7 @@ final class Configuration {
           if (error == null) {
             entry.setter(val.value);
           } else {
-            errors.add(error);
+            errors.add(KeyValidationError(key, error));
           }
         } else {
           errors.add(TypeError(key, type, val.value.runtimeType));
@@ -175,6 +207,17 @@ sealed class ReadConfigError {
   const ReadConfigError(this.gravity);
 }
 
+class ConfigurationFileNotFoundError extends ReadConfigError {
+  final String path;
+
+  ConfigurationFileNotFoundError(this.path) : super(Gravity.warn);
+
+  @override
+  String toString() {
+    return "Configuration file not found in $path";
+  }
+}
+
 class MissingKeyError extends ReadConfigError {
   final String key;
   final bool required;
@@ -184,7 +227,7 @@ class MissingKeyError extends ReadConfigError {
 
   @override
   String toString() {
-    return "Missing ${required ? 'required ' : ''}key: $key";
+    return "Missing ${required ? 'required ' : ''}key $key";
   }
 }
 
@@ -211,6 +254,18 @@ sealed class ValidationError extends ReadConfigError {
   const ValidationError() : super(Gravity.warn);
 }
 
+class KeyValidationError extends ValidationError {
+  final ValidationError error;
+  final String key;
+
+  const KeyValidationError(this.key, this.error);
+
+  @override
+  String toString() {
+    return "Key $key validation error: $error";
+  }
+}
+
 class RangeValidationError<T extends Comparable> extends ValidationError {
   final T start;
   final T end;
@@ -221,6 +276,18 @@ class RangeValidationError<T extends Comparable> extends ValidationError {
   @override
   String toString() {
     return "Range validation error. Expected to be between $start and $end but got $actual";
+  }
+}
+
+class ExepectedValidationError extends ValidationError {
+  final List<String> expected;
+  final String got;
+
+  const ExepectedValidationError(this.got, this.expected);
+
+  @override
+  String toString() {
+    return "Expected value in ${expected.join(', ')} but got $got";
   }
 }
 
@@ -238,7 +305,14 @@ class ConfigurationParseError extends ReadConfigError {
 (Configuration, ReadConfigErrors?) parseConfig(File file) {
   final config = Configuration();
 
-  final (values, errors) = ConfigurationParser.parseFromFile(file);
+  MapValue? values;
+  List<ParseError>? errors;
+  try {
+    (values, errors) = ConfigurationParser.parseFromFile(file);
+  } on PathNotFoundException catch (e) {
+    return (config, ReadConfigErrors([ConfigurationFileNotFoundError(e.path ?? file.path)]));
+  }
+
   if (errors != null) {
     assert(errors.isNotEmpty);
     return (config, ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
