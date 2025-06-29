@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:fuzzy_string/fuzzy_string.dart';
 import 'package:wayxec/views/options_list_widgets/list_view_options_list_widget.dart';
+import 'package:wayxec/views/options_list_widgets/stack_options_list_widget.dart';
 
 /// An [Intent] to highlight the previous option in the autocomplete list.
 class SearchPreviousOptionIntent extends Intent {
@@ -195,6 +196,28 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
 
   @override
   Widget build(BuildContext context) {
+    const useListViewOptionsRendering = false;
+    Widget optionsView;
+    if (useListViewOptionsRendering) {
+      optionsView = ListViewOptionsListWidget<T>(
+        key: optionsListWidgetGlobalKey,
+        options: widget.options,
+        renderOption: widget.renderOption,
+        prototypeItem: widget.prototypeItem,
+        filtered: filtered,
+        highlighted: highlighted,
+      );
+    } else {
+      optionsView = StackOptionsListWidget<T>(
+        key: optionsListWidgetGlobalKey,
+        options: widget.options,
+        renderOption: widget.renderOption,
+        prototypeItem: widget.prototypeItem,
+        filtered: filtered,
+        highlighted: highlighted,
+      );
+    }
+
     return Shortcuts(
       shortcuts: shortcuts,
       child: Actions(
@@ -209,13 +232,8 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
               onChanged: updateFilter,
             ),
             Expanded(
-              child: ListViewOptionsListWidget<T>(
-                key: optionsListWidgetGlobalKey,
-                options: widget.options,
-                renderOption: widget.renderOption,
-                prototypeItem: widget.prototypeItem,
-                filtered: filtered,
-                highlighted: highlighted,
+              child: Material(
+                child: optionsView,
               ),
             ),
           ],
