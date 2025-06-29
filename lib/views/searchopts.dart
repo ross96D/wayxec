@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:fuzzy_string/fuzzy_string.dart';
+import 'package:wayxec/views/options_list_widgets/list_view_options_list_widget.dart';
 
 /// An [Intent] to highlight the previous option in the autocomplete list.
 class SearchPreviousOptionIntent extends Intent {
@@ -53,6 +52,8 @@ class SearchOptionsRenderConfig {
   const SearchOptionsRenderConfig({required this.isHighlighted});
 }
 
+typedef RenderOption<T extends Object> = Widget Function(BuildContext context, T item, SearchOptionsRenderConfig config);
+
 class SearchOptions<T extends Object> extends StatefulWidget {
   const SearchOptions({
     super.key,
@@ -68,8 +69,7 @@ class SearchOptions<T extends Object> extends StatefulWidget {
 
   final List<Option<T>> options;
 
-  final Widget Function(BuildContext context, T item, SearchOptionsRenderConfig config)
-      renderOption;
+  final RenderOption<T> renderOption;
 
   final void Function(T item) onSelected;
 
@@ -92,14 +92,9 @@ class SearchOptions<T extends Object> extends StatefulWidget {
 }
 
 class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
-  late List<GlobalKey> keys;
-  GlobalKey? currentHighlightKey;
-  double? itemHeight;
-
-  ValueNotifier<int> highlighted = ValueNotifier(0);
-  final ScrollController scrollController = ScrollController();
 
   late List<Option<T>> filtered;
+  ValueNotifier<int> highlighted = ValueNotifier(0);
 
   late final Map<Type, Action<Intent>> actionMap;
   late final CallbackAction<SearchPreviousOptionIntent> previousOptionAction;
@@ -108,11 +103,18 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
 
   late final Map<ShortcutActivator, Intent> shortcuts;
 
+  final GlobalKey optionsListWidgetGlobalKey = GlobalKey();
+  OptionsListRenderer get optionsListRenderer {
+    final state = optionsListWidgetGlobalKey.currentState;
+    assert(state!=null, "optionsListWidgetGlobalKey hasn't been assigned to a widget, or was accessed before the first frame");
+    assert(state is OptionsListRenderer, "optionsListWidgetGlobalKey was assigned to a widget whose state doesn't implement OptionsListRenderer");
+    return state as OptionsListRenderer;
+  }
+
   @override
   void initState() {
     super.initState();
 
-    keys = List.generate(widget.options.length, (index) => GlobalKey());
     filtered = widget.options;
 
     shortcuts = <ShortcutActivator, Intent>{
@@ -136,33 +138,15 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
   @override
   void dispose() {
     highlighted.dispose();
-    scrollController.dispose();
     super.dispose();
   }
 
   bool _isItemVisible(int index) {
-    assert(itemHeight != null);
-
-    final viwportDimension = scrollController.position.viewportDimension;
-    final pos = index * itemHeight!;
-    return scrollController.offset < pos && pos < scrollController.offset + viwportDimension;
+    return optionsListRenderer.isItemVisible(index);
   }
 
   void _scrollTo(int index, ScrollDirection direction) {
-    assert(itemHeight != null);
-
-    if (_isItemVisible(index)) {
-      return;
-    }
-    switch (direction) {
-      case ScrollDirection.idle:
-        throw UnimplementedError("ScrollDirection.idle behaiviour is not implented");
-      case ScrollDirection.forward:
-        /// Use index + 1 because if not than scrolling does not get to the item
-        scrollController.jumpTo(max((index + 1) * itemHeight! - scrollController.position.viewportDimension, 0));
-      case ScrollDirection.reverse:
-        scrollController.jumpTo( index * itemHeight!);
-    }
+    optionsListRenderer.scrollTo(index, direction);
   }
 
   void updateHighlight(int newIndex, ScrollDirection direction) {
@@ -171,9 +155,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
       return;
     }
     highlighted.value = newIndex % filtered.length;
-    if (itemHeight != null) {
-      _scrollTo(highlighted.value, direction);
-    }
+    _scrollTo(highlighted.value, direction);
   }
 
   void highlightPreviousOption(SearchPreviousOptionIntent intent) {
@@ -227,35 +209,13 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
               onChanged: updateFilter,
             ),
             Expanded(
-              child: ListenableBuilder(
-                listenable: highlighted,
-                builder: (context, _) {
-                  return ListView.builder(
-                    controller: scrollController,
-                    itemCount: filtered.length,
-                    prototypeItem: _GetSizeWidget(
-                      child: widget.prototypeItem ??
-                          widget.renderOption(
-                            context,
-                            widget.options.first.object,
-                            const SearchOptionsRenderConfig(isHighlighted: false),
-                          ),
-                      onSize: (v) => itemHeight = v.height,
-                    ),
-                    itemBuilder: (context, index) {
-                      final isHighlighted = highlighted.value == index;
-                      final child = widget.renderOption(
-                        context,
-                        filtered[index].object,
-                        SearchOptionsRenderConfig(isHighlighted: isHighlighted),
-                      );
-                      if (isHighlighted) {
-                        currentHighlightKey = keys[index];
-                      }
-                      return KeyedSubtree(key: keys[index], child: child);
-                    },
-                  );
-                },
+              child: ListViewOptionsListWidget<T>(
+                key: optionsListWidgetGlobalKey,
+                options: widget.options,
+                renderOption: widget.renderOption,
+                prototypeItem: widget.prototypeItem,
+                filtered: filtered,
+                highlighted: highlighted,
               ),
             ),
           ],
@@ -263,34 +223,11 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
       ),
     );
   }
+
 }
 
-// Helper widget to measure prototype size
-class _GetSizeWidget extends SingleChildRenderObjectWidget {
-  final void Function(Size) onSize;
 
-  const _GetSizeWidget({
-    required super.child,
-    required this.onSize,
-  });
-
-  @override
-  RenderObject createRenderObject(BuildContext context) {
-    return _RenderItemSizer(onSize: onSize);
-  }
-}
-
-class _RenderItemSizer extends RenderProxyBox {
-  final void Function(Size) onSize;
-
-  _RenderItemSizer({required this.onSize});
-
-  @override
-  void performLayout() {
-    super.performLayout();
-    // Notify parent when size is determined
-    if (hasSize) {
-      onSize(size);
-    }
-  }
+abstract class OptionsListRenderer {
+  bool isItemVisible(int index);
+  void scrollTo(int index, ScrollDirection direction);
 }

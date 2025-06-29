@@ -1,11 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:wayxec/db/db.dart';
 import 'package:wayxec/logger.dart';
 import 'package:wayxec/search_desktop.dart';
-import 'package:path/path.dart' as path;
-import 'package:rresvg/rresvg.dart';
+import 'package:wayxec/views/option_widgets/list_tile_option_widget.dart';
 import 'package:wayxec/views/searchopts.dart';
 
 class ApplicationOption extends Option<Application> {
@@ -38,29 +35,10 @@ class SearchApplication extends StatelessWidget {
 }
 
 Widget _renderOption(BuildContext context, Application app, SearchOptionsRenderConfig config) {
-  final theme = Theme.of(context);
-  print (app.icon);
-  return ListTile(
-    leading: app.icon != null ? _FutureIcon(app.icon!) : SizedBox(width: 35,),
-    title: Text(
-      app.name,
-      style: theme.textTheme.bodyLarge,
-      softWrap: false,
-      overflow: TextOverflow.fade,
-    ),
-    onTap: () => _runApp(app),
-    subtitle: app.comment != null
-        ? Text(
-            app.comment!,
-            softWrap: false,
-            overflow: TextOverflow.fade,
-            style: theme.textTheme.bodySmall,
-          )
-        : null,
-    enabled: true,
-    tileColor: config.isHighlighted
-        ? Color.alphaBlend(theme.hoverColor, theme.colorScheme.surface)
-        : theme.colorScheme.surface,
+  return ListTileOptionWidget(
+    app: app, 
+    config: config,
+    onTap:  () => _runApp(app),
   );
 }
 
@@ -69,26 +47,5 @@ Future<void> _runApp(Application app) async {
   final result = await app.run();
   if (result.isError()) {
     logger.e(result.unsafeGetError().error());
-  }
-}
-
-class _FutureIcon extends StatelessWidget {
-  final String? filepath;
-
-  // TODO the icon path should not be loaded here. Should be loaded at application start.
-  _FutureIcon(String icon) : filepath = searchIcon(icon);
-
-  @override
-  Widget build(BuildContext context) {
-    if (filepath == null) {
-      return const SizedBox(width: 35,);
-    }
-    if (path.extension(filepath!) == ".svg") {
-      return SvgView(
-        filepath: filepath!,
-        constraints: const BoxConstraints.tightFor(height: 35, width: 35),
-      );
-    }
-    return Image.file(File(filepath!), width: 35, height: 35);
   }
 }
