@@ -22,9 +22,6 @@ struct IconLookup_String {
 
 typedef struct IconLookup_String IconLookup_String;
 
-
-FFI_PLUGIN_EXPORT intptr_t sum(intptr_t a, intptr_t b);
-
 FFI_PLUGIN_EXPORT void IconLookup_Free(IconLookup_String string);
 
 FFI_PLUGIN_EXPORT IconLookup_String IconLookup_Lookup(const char* icon);
