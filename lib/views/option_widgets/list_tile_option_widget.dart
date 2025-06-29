@@ -35,7 +35,7 @@ class ListTileOptionWidget extends StatelessWidget {
               overflow: TextOverflow.fade,
               style: theme.textTheme.bodySmall,
             )
-          : null,
+          : SizedBox.shrink(),
       enabled: true,
       tileColor: config.isHighlighted
           ? Color.alphaBlend(theme.hoverColor, theme.colorScheme.surface)
