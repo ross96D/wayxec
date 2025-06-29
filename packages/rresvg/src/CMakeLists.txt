@@ -37,3 +37,5 @@ set_target_properties(rresvg PROPERTIES
 )
 
 target_compile_definitions(rresvg PUBLIC DART_SHARED_LIB)
+
+target_link_libraries(${BINARY_NAME} PUBLIC rresvg)

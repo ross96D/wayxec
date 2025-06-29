@@ -33,3 +33,5 @@ set_target_properties(icon_lookup PROPERTIES
 )
 
 target_compile_definitions(icon_lookup PUBLIC DART_SHARED_LIB)
+
+target_link_libraries(${BINARY_NAME} PUBLIC icon_lookup)
