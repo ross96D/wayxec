@@ -13,7 +13,7 @@ Logger get logger {
 }
 
 void initLogger({
-  Level minLevel = kReleaseMode ? Level.all : Level.debug,
+  Level minLevel = kReleaseMode ? Level.all : Level.trace,
   LogOutput? output,
 }) {
   output ??= ConsoleOutput();

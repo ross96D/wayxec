@@ -41,7 +41,7 @@ void loadConfig([String? filepath]) {
 }
 
 void main(List<String> args) async {
-  initLogger(minLevel: Level.debug);
+  initLogger(minLevel: Level.trace);
 
   final cliparser = ArgParser()
     ..addFlag("normal-window",

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:logger/logger.dart';
 import 'package:wayxec/db/isolate_manager.dart';
 import 'package:wayxec/logger.dart';
 import 'package:wayxec/search_desktop.dart';
@@ -63,12 +64,15 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
     if (!dir.existsSync()) {
       continue;
     }
-    logger.d("searching apps in ${dir.absolute}");
+    logger.log(Level.trace, "searching apps in ${dir.absolute}");
     for (final entry in dir.listSync(followLinks: true, recursive: true)) {
       if (entry is! File) {
         continue;
       }
-      logger.d("found possible app ${entry.absolute.path}");
+      if (path.extension(entry.path) != ".desktop") {
+        continue;
+      }
+      logger.log(Level.trace, "found possible app ${entry.absolute.path}");
       final oldApp = old[entry.absolute.path];
 
       /// if in cache check for lastModified. If lastModified is equal to file is a cache hit
@@ -110,7 +114,18 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
         }
         response.add(app);
       } else {
-        logger.w("fail to parse application from file ${entry.absolute.path}. Error ${result.unsafeGetError().error()}");
+        final error = result.unsafeGetError();
+        switch (error) {
+          case DesktopEntryInvalidState():
+            switch(error.state) {
+              case InvalidStateEnum.hidden:
+                logger.log(Level.trace, "${entry.absolute.path} is hidden");
+              default:
+                logger.w("fail to parse application from file ${entry.absolute.path}. Error ${error.error()}");
+            }
+          case FileSystemError():
+            logger.w("fail to parse application from file ${entry.absolute.path}. Error ${error.error()}");
+        }
       }
     }
   }
@@ -120,9 +135,9 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
 
 Future<List<Application>> loadApplications(MDatabase db) async {
   final List<Application> list = await db.getAll();
-  logger.d("Applications loaded from database");
+  logger.log(Level.trace, "Applications loaded from database");
   for (final app in list) {
-    logger.d(app);
+    logger.log(Level.trace, app);
   }
 
   final map = Map.fromEntries(list.map((e) => MapEntry(e.filepath, e)));
@@ -132,7 +147,7 @@ Future<List<Application>> loadApplications(MDatabase db) async {
     if (old != null && old.lastModified == app.lastModified) {
       continue;
     }
-    logger.d("new application found $app");
+    logger.log(Level.trace, "new application found $app");
     db.upsert(app);
   }
   return _orderApps(apps);

@@ -341,12 +341,12 @@ enum InvalidStateEnum {
 }
 
 class DesktopEntryInvalidState extends ParseApplicationError {
-  final InvalidStateEnum _state;
-  const DesktopEntryInvalidState(this._state);
+  final InvalidStateEnum state;
+  const DesktopEntryInvalidState(this.state);
 
   @override
   String error() {
-    return _state.toString();
+    return state.toString();
   }
 }
 
