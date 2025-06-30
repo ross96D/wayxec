@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:wayxec/db/isolate_manager.dart';
+import 'package:wayxec/logger.dart';
 import 'package:wayxec/search_desktop.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:path/path.dart' as path;
@@ -62,47 +63,54 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
     if (!dir.existsSync()) {
       continue;
     }
+    logger.d("searching apps in ${dir.absolute}");
     for (final entry in dir.listSync(followLinks: true, recursive: true)) {
-      if (entry is File) {
-        final oldApp = old[entry.absolute.path];
+      if (entry is! File) {
+        continue;
+      }
+      logger.d("found possible app ${entry.absolute.path}");
+      final oldApp = old[entry.absolute.path];
 
-        /// if in cache check for lastModified. If lastModified is equal to file is a cache hit
-        if (oldApp != null) {
-          final oldLastModified = oldApp.lastModified;
-          if (oldLastModified == (entry.statSync().modified)) {
-            // in case of two apps having the same name, the freedesktop spec says the first one
-            // is the valid one
-            if (response.contains(oldApp)) {
-              continue;
-            }
-            // check try exec
-            if (oldApp.tryExec != null && !tryExec(oldApp.tryExec!)) {
-              continue;
-            }
-            response.add(oldApp);
-            continue;
-          }
-        }
-
-        final result = Application.parseFromFile(entry);
-        if (result.isSuccess()) {
-          final app = result.unsafeGetSuccess();
+      /// if in cache check for lastModified. If lastModified is equal to file is a cache hit
+      if (oldApp != null) {
+        final oldLastModified = oldApp.lastModified;
+        if (oldLastModified == (entry.statSync().modified)) {
           // in case of two apps having the same name, the freedesktop spec says the first one
           // is the valid one
-          if (response.contains(app)) {
+          if (response.contains(oldApp)) {
+            logger.w("cache hit but found repetead application entry for ${response.lookup(oldApp)} : $oldApp");
             continue;
           }
           // check try exec
-          if (app.tryExec != null && !tryExec(app.tryExec!)) {
+          if (oldApp.tryExec != null && !tryExec(oldApp.tryExec!)) {
             continue;
           }
-          if (app.icon != null) {
-            futures.add(
-              managerSearchIcon.run(app.icon!).then((value) => app.iconPath = value),
-            );
-          }
-          response.add(app);
+          response.add(oldApp);
+          continue;
         }
+      }
+
+      final result = Application.parseFromFile(entry);
+      if (result.isSuccess()) {
+        final app = result.unsafeGetSuccess();
+        // in case of two apps having the same name, the freedesktop spec says the first one
+        // is the valid one
+        if (response.contains(app)) {
+          logger.w("found repetead application entry for ${response.lookup(app)} : $app");
+          continue;
+        }
+        // check try exec
+        if (app.tryExec != null && !tryExec(app.tryExec!)) {
+          continue;
+        }
+        if (app.icon != null) {
+          futures.add(
+            managerSearchIcon.run(app.icon!).then((value) => app.iconPath = value),
+          );
+        }
+        response.add(app);
+      } else {
+        logger.w("fail to parse application from file ${entry.absolute.path}. Error ${result.unsafeGetError().error()}");
       }
     }
   }
@@ -111,20 +119,27 @@ Future<List<Application>> loadApplicationsFromDisk(Map<String, Application> old)
 }
 
 Future<List<Application>> loadApplications(MDatabase db) async {
-  var list = await db.getAll();
-  final map = Map.fromEntries(list.map((e) => MapEntry(e.name, e)));
+  final List<Application> list = await db.getAll();
+  logger.d("Applications loaded from database");
+  for (final app in list) {
+    logger.d(app);
+  }
+
+  final map = Map.fromEntries(list.map((e) => MapEntry(e.filepath, e)));
   final apps = await loadApplicationsFromDisk(map);
   for (final app in apps) {
-    final old = map[app.name];
+    final old = map[app.filepath];
     if (old != null && old.lastModified == app.lastModified) {
       continue;
     }
+    logger.d("new application found $app");
     db.upsert(app);
   }
   return _orderApps(apps);
 }
 
 List<Application> _orderApps(List<Application> apps) {
+  Map<String, Application> seenBefore = {};
   List<Application> response = [];
 
   int searchIndex(int timesExec) {
@@ -139,6 +154,12 @@ List<Application> _orderApps(List<Application> apps) {
   }
 
   for (final app in apps) {
+    if (seenBefore.containsKey(app.name)) {
+      logger.e("duplicated application error ${seenBefore[app.name]} - $app");
+    } else {
+      seenBefore[app.name] = app;
+    }
+
     final index = searchIndex(app.timesExec);
     if (index == -1) {
       response.add(app);

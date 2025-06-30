@@ -5,6 +5,7 @@ import 'package:args/args.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 import 'package:wayxec/config.dart';
 import 'package:wayxec/db/db.dart';
 import 'package:wayxec/logger.dart';
@@ -40,7 +41,7 @@ void loadConfig([String? filepath]) {
 }
 
 void main(List<String> args) async {
-  initLogger();
+  initLogger(minLevel: Level.debug);
 
   final cliparser = ArgParser()
     ..addFlag("normal-window",

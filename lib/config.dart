@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:config/config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
 
 final class _SetValuesUtility<T extends Object> {
@@ -57,7 +58,7 @@ final class Configuration {
       : _opacity = opacity,
         _width = width,
         _height = height,
-        _logLevel = Level.info;
+        _logLevel = kReleaseMode ? Level.info : Level.debug;
 
   List<ReadConfigError> _setValues(MapValue values) {
     final mapSetter = <_SetValuesUtility>[

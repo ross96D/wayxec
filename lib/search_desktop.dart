@@ -167,7 +167,12 @@ class Application {
   bool operator ==(covariant Application other) => other.name == name;
 
   @override
-  int get hashCode => filepath.hashCode;
+  int get hashCode => name.hashCode;
+
+  @override
+  String toString() {
+    return "Application name: $name filepath: $filepath";
+  }
 
   Future<Result<Void, StringError>> run() async {
     if (dBusActivatable) {

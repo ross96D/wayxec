@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:chalkdart/chalkdart.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:logger/logger.dart' hide PrettyPrinter;
 
@@ -12,7 +13,7 @@ Logger get logger {
 }
 
 void initLogger({
-  Level minLevel = Level.all,
+  Level minLevel = kReleaseMode ? Level.all : Level.debug,
   LogOutput? output,
 }) {
   output ??= ConsoleOutput();
@@ -35,7 +36,7 @@ class Filter extends LogFilter {
   }
   @override
   bool shouldLog(LogEvent event) {
-    return (level ?? Level.all).value < event.level.value;
+    return (level ?? Level.all).value <= event.level.value;
   }
 }
 
