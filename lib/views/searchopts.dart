@@ -53,7 +53,8 @@ class SearchOptionsRenderConfig {
   const SearchOptionsRenderConfig({required this.isHighlighted});
 }
 
-typedef RenderOption<T extends Object> = Widget Function(BuildContext context, T item, SearchOptionsRenderConfig config);
+typedef RenderOption<T extends Object> = Widget Function(
+  BuildContext context, T item, SearchOptionsRenderConfig config);
 
 class SearchOptions<T extends Object> extends StatefulWidget {
   const SearchOptions({
@@ -93,7 +94,6 @@ class SearchOptions<T extends Object> extends StatefulWidget {
 }
 
 class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
-
   late List<Option<T>> filtered;
   ValueNotifier<int> highlighted = ValueNotifier(0);
 
@@ -107,7 +107,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
   final GlobalKey optionsListWidgetGlobalKey = GlobalKey();
   OptionsListRenderer get optionsListRenderer {
     final state = optionsListWidgetGlobalKey.currentState;
-    assert(state!=null, "optionsListWidgetGlobalKey hasn't been assigned to a widget, or was accessed before the first frame");
+    assert(state != null, "optionsListWidgetGlobalKey hasn't been assigned to a widget, or was accessed before the first frame");
     assert(state is OptionsListRenderer, "optionsListWidgetGlobalKey was assigned to a widget whose state doesn't implement OptionsListRenderer");
     return state as OptionsListRenderer;
   }
@@ -169,7 +169,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
 
   void highlightNextOption(SearchNextOptionIntent intent) {
     // if its the last item change the scrolling direction to avoid weird jumps animations
-    return switch(highlighted.value == filtered.length - 1) {
+    return switch (highlighted.value == filtered.length - 1) {
       true => updateHighlight(highlighted.value + 1, ScrollDirection.reverse),
       false => updateHighlight(highlighted.value + 1, ScrollDirection.forward),
     };
@@ -231,19 +231,13 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
               ),
               onChanged: updateFilter,
             ),
-            Expanded(
-              child: Material(
-                child: optionsView,
-              ),
-            ),
+            Expanded(child: Material(child: optionsView)),
           ],
         ),
       ),
     );
   }
-
 }
-
 
 abstract class OptionsListRenderer {
   bool isItemVisible(int index);

@@ -4,11 +4,10 @@ import 'package:wayxec/views/searchopts.dart';
 import 'package:wayxec/views/util_widgets/future_icon.dart';
 
 class ListTileOptionWidget extends StatelessWidget {
-
-  final Application app; 
+  final Application app;
   final SearchOptionsRenderConfig config;
   final VoidCallback onTap;
- 
+
   const ListTileOptionWidget({
     required this.app,
     required this.config,
@@ -20,7 +19,7 @@ class ListTileOptionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListTile(
-      leading: app.icon != null ? FutureIcon(app.icon!) : SizedBox(width: 35,),
+      leading: app.icon != null ? FutureIcon(app.icon!) : SizedBox(width: 35),
       title: Text(
         app.name,
         style: theme.textTheme.bodyLarge,
