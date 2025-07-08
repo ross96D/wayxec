@@ -53,8 +53,8 @@ class SearchOptionsRenderConfig {
   const SearchOptionsRenderConfig({required this.isHighlighted});
 }
 
-typedef RenderOption<T extends Object> = Widget Function(
-  BuildContext context, T item, SearchOptionsRenderConfig config);
+typedef RenderOption<T extends Object> =
+    Widget Function(BuildContext context, T item, SearchOptionsRenderConfig config);
 
 class SearchOptions<T extends Object> extends StatefulWidget {
   const SearchOptions({
@@ -107,8 +107,14 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
   final GlobalKey optionsListWidgetGlobalKey = GlobalKey();
   OptionsListRenderer get optionsListRenderer {
     final state = optionsListWidgetGlobalKey.currentState;
-    assert(state != null, "optionsListWidgetGlobalKey hasn't been assigned to a widget, or was accessed before the first frame");
-    assert(state is OptionsListRenderer, "optionsListWidgetGlobalKey was assigned to a widget whose state doesn't implement OptionsListRenderer");
+    assert(
+      state != null,
+      "optionsListWidgetGlobalKey hasn't been assigned to a widget, or was accessed before the first frame",
+    );
+    assert(
+      state is OptionsListRenderer,
+      "optionsListWidgetGlobalKey was assigned to a widget whose state doesn't implement OptionsListRenderer",
+    );
     return state as OptionsListRenderer;
   }
 
@@ -124,8 +130,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
       widget.selectOptionActivator: const SearchSelectOptionIntent(),
     };
 
-    previousOptionAction =
-        CallbackAction<SearchPreviousOptionIntent>(onInvoke: highlightPreviousOption);
+    previousOptionAction = CallbackAction<SearchPreviousOptionIntent>(onInvoke: highlightPreviousOption);
     nextOptionAction = CallbackAction<SearchNextOptionIntent>(onInvoke: highlightNextOption);
     selectOptionAction = CallbackAction<SearchSelectOptionIntent>(onInvoke: selectOption);
 
@@ -197,26 +202,6 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
   @override
   Widget build(BuildContext context) {
     const useListViewOptionsRendering = false;
-    Widget optionsView;
-    if (useListViewOptionsRendering) {
-      optionsView = ListViewOptionsListWidget<T>(
-        key: optionsListWidgetGlobalKey,
-        options: widget.options,
-        renderOption: widget.renderOption,
-        prototypeItem: widget.prototypeItem,
-        filtered: filtered,
-        highlighted: highlighted,
-      );
-    } else {
-      optionsView = StackOptionsListWidget<T>(
-        key: optionsListWidgetGlobalKey,
-        options: widget.options,
-        renderOption: widget.renderOption,
-        prototypeItem: widget.prototypeItem,
-        filtered: filtered,
-        highlighted: highlighted,
-      );
-    }
 
     return Shortcuts(
       shortcuts: shortcuts,
@@ -224,14 +209,52 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
         actions: actionMap,
         child: Column(
           children: [
-            TextFormField(
-              autofocus: true,
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.all(5.0),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+              child: Material(
+                child: TextFormField(
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(5.0),
+                  ),
+                  onChanged: updateFilter,
+                ),
               ),
-              onChanged: updateFilter,
             ),
-            Expanded(child: Material(child: optionsView)),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  Widget optionsView;
+                  if (useListViewOptionsRendering) {
+                    optionsView = ListViewOptionsListWidget<T>(
+                      key: optionsListWidgetGlobalKey,
+                      options: widget.options,
+                      renderOption: widget.renderOption,
+                      prototypeItem: widget.prototypeItem,
+                      filtered: filtered,
+                      highlighted: highlighted,
+                    );
+                  } else {
+                    optionsView = StackOptionsListWidget<T>(
+                      key: optionsListWidgetGlobalKey,
+                      options: widget.options,
+                      renderOption: widget.renderOption,
+                      prototypeItem: widget.prototypeItem,
+                      filtered: filtered,
+                      highlighted: highlighted,
+                      availableHeight: constraints.maxHeight,
+                    );
+                  }
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+                      child: Material(child: optionsView),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

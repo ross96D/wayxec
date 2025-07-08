@@ -21,8 +21,7 @@ late Future<List<Application>> apps;
 bool firstBuild = true;
 
 void loadConfig([String? filepath]) {
-  final configDir =
-      Platform.environment["XDG_CONFIG_HOME"] ?? expandEnvironmentVariables(r"$HOME/.config");
+  final configDir = Platform.environment["XDG_CONFIG_HOME"] ?? expandEnvironmentVariables(r"$HOME/.config");
   filepath ??= path.joinAll([configDir, "wayxec", "config"]);
   logger.d("configuration file path: $filepath");
 
@@ -44,10 +43,8 @@ void main(List<String> args) async {
   initLogger(minLevel: Level.trace);
 
   final cliparser = ArgParser()
-    ..addFlag("normal-window",
-        help: "run as a normal window instead of using the layer shell protocol")
-    ..addOption("config",
-        help: "configuration file location. Default is XDG_CONFIG_HOME/wayxec/config");
+    ..addFlag("normal-window", help: "run as a normal window instead of using the layer shell protocol")
+    ..addOption("config", help: "configuration file location. Default is XDG_CONFIG_HOME/wayxec/config");
   final results = cliparser.parse(args);
   final normalWindow = results["normal-window"] as bool?;
   final configFilePath = results["config"] as String?;
@@ -121,7 +118,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       shortcuts: <ShortcutActivator, Intent>{
         ...WidgetsApp.defaultShortcuts,
-        const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent()
+        const SingleActivator(LogicalKeyboardKey.escape): const ExitIntent(),
       },
       actions: {
         ...WidgetsApp.defaultActions,
@@ -130,21 +127,22 @@ class MyApp extends StatelessWidget {
       home: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(10)),
         child: Scaffold(
-          body: Center(
-            child: FutureBuilder(
-              future: apps,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return SearchApplication(apps: snapshot.data!);
-                } else {
-                  return const SizedBox(
+          backgroundColor: Colors.transparent,
+          body: FutureBuilder(
+            future: apps,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return SearchApplication(apps: snapshot.data!);
+              } else {
+                return const Center(
+                  child: SizedBox(
                     height: 35,
                     width: 35,
                     child: CircularProgressIndicator(),
-                  );
-                }
-              },
-            ),
+                  ),
+                );
+              }
+            },
           ),
         ),
       ),

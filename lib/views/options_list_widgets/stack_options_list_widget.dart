@@ -12,6 +12,7 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
   final List<Option<T>> filtered;
   final Widget? prototypeItem;
   final ValueNotifier<int> highlighted;
+  final double availableHeight;
 
   const StackOptionsListWidget({
     required this.options,
@@ -19,6 +20,7 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
     required this.filtered,
     required this.prototypeItem,
     required this.highlighted,
+    required this.availableHeight,
     super.key,
   });
 
@@ -28,10 +30,10 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
 
 class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsListWidget<T>>
     implements OptionsListRenderer {
-  int startingIndex = 0;
-  double itemHeight = 64; // do we need to calculate this ??
-  int shownItemCount = 5; // TODO 2 calculate this dynamically
+  double itemHeight = 64; // TODO 2 this should be passed into here somehow
+  late int shownItemCount = (widget.availableHeight / itemHeight).floor();
 
+  int startingIndex = 0;
   final items = <_Item<T>>{};
 
   @override
@@ -67,35 +69,54 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       }
     }
 
-    final sortedItems = items.toList()..sort((a, b) => a.index.compareTo(b.index));
-    return Stack(
-      fit: StackFit.expand,
-      clipBehavior: Clip.hardEdge,
-      children: [
-        for (final e in sortedItems)
-          ValueListenableBuilder(
-            key: e.globalKey,
-            valueListenable: widget.highlighted,
-            builder: (context, value, child) {
-              return AnimatedPositioned(
-                duration: animationDuration * 0.66,
-                curve: Curves.easeOutCubic,
-                left: 0,
-                right: 0,
-                top: itemHeight * (e.index - startingIndex),
-                child: _ItemAnimation(
-                  isItemVisible: e.timeRemoved == null && isItemVisible(e.index),
-                  isItemRemoved: e.timeRemoved != null,
-                  child: widget.renderOption(
-                    context,
-                    e.option.object,
-                    SearchOptionsRenderConfig(isHighlighted: value == e.index),
-                  ),
+    final sortedItems = items.toList()
+      ..sort((a, b) {
+        if (a.timeRemoved == null && b.timeRemoved != null) return 1;
+        if (a.timeRemoved != null && b.timeRemoved == null) return -1;
+        return a.index.compareTo(b.index);
+      });
+    final stackChildren = <Widget>[];
+    int notRemovedItemCount = 0;
+    for (final e in sortedItems) {
+      if (e.timeRemoved == null) {
+        notRemovedItemCount++;
+      }
+      stackChildren.add(
+        ValueListenableBuilder(
+          key: e.globalKey,
+          valueListenable: widget.highlighted,
+          builder: (context, value, child) {
+            return AnimatedPositioned(
+              duration: animationDuration * 0.66,
+              curve: Curves.easeOutCubic,
+              left: 0,
+              right: 0,
+              top: itemHeight * (e.index - startingIndex),
+              child: _ItemAnimation(
+                isItemVisible: e.timeRemoved == null && isItemVisible(e.index),
+                isItemRemoved: e.timeRemoved != null,
+                child: widget.renderOption(
+                  context,
+                  e.option.object,
+                  SearchOptionsRenderConfig(isHighlighted: value == e.index),
                 ),
-              );
-            },
-          ),
-      ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+    // print('ALL rendered:');
+    // print(sortedItems.map((e) => e.option.value).toList());
+    // print('Active ($notRemovedItemCount):');
+    // print(sortedItems.where((e) => e.timeRemoved == null).map((e) => e.option.value).toList());
+    return SizedBox(
+      height: itemHeight * min(notRemovedItemCount, shownItemCount),
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.hardEdge,
+        children: stackChildren,
+      ),
     );
   }
 
