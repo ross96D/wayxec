@@ -58,10 +58,12 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       if (item != null) {
         item.index = i;
       } else {
-        items.add(_Item(
-          index: i,
-          option: e,
-        ));
+        items.add(
+          _Item(
+            index: i,
+            option: e,
+          ),
+        );
       }
     }
 
@@ -100,9 +102,9 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
   int getRenderStart() => max(0, startingIndex - 2);
   int getRenderEnd() => min((startingIndex + shownItemCount + 2), widget.filtered.length);
   List<Option<T>> getVisibleItems() => widget.filtered.sublist(
-        getRenderStart(),
-        getRenderEnd(),
-      );
+    getRenderStart(),
+    getRenderEnd(),
+  );
 
   @override
   bool isItemVisible(int index) {
