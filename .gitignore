@@ -49,3 +49,6 @@ AppDir
 wayxec-x86_64.AppImage
 # configuration file for testing purpose
 config
+
+resvg-0.45.1/
+resvg-0.45.1.tar.xz
