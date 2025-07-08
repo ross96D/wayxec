@@ -18,7 +18,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.1.5 <4.0.0"
+  sdk: "^3.8.0"
 
 dependencies:
   flutter:
@@ -44,6 +44,7 @@ dependencies:
   args: ^2.5.0
   logger: ^2.5.0
   chalkdart: ^3.0.5
+  dartx: ^1.2.0
 
 dev_dependencies:
   flutter_test:
