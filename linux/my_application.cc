@@ -69,9 +69,9 @@ static void my_application_activate(GApplication* application) {
   }
 
   //! This code seems to be needed for flutter version 3.19+
-  // GdkRGBA background_color;
-  // gdk_rgba_parse(&background_color, "#00000000");
-  // fl_view_set_background_color(view, &background_color);
+  GdkRGBA background_color;
+  gdk_rgba_parse(&background_color, "#00000000");
+  fl_view_set_background_color(view, &background_color);
 
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
