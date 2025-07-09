@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:wayxec/views/searchopts.dart';
@@ -47,20 +48,15 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         }
       } else if (!visibleItems.any((i) => e.option.value == i.value)) {
         e.timeRemoved = DateTime.now();
-      } else {
-        e.timeRemoved = null;
       }
     }
     items.removeAll(toRemove);
     for (int i = getRenderStart(); i < getRenderEnd(); i++) {
       final e = widget.filtered[i];
-      _Item<T>? item;
-      try {
-        // would be prettier with dartx firstOrNullWhere
-        item = items.firstWhere((item) => item.option == e);
-      } catch (_) {}
+      final item = items.firstOrNullWhere((item) => item.option == e);
       if (item != null) {
         item.index = i;
+        item.timeRemoved = null;
       } else {
         items.add(
           _Item(
@@ -108,10 +104,6 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         ),
       );
     }
-    // print('ALL rendered:');
-    // print(sortedItems.map((e) => e.option.value).toList());
-    // print('Active ($notRemovedItemCount):');
-    // print(sortedItems.where((e) => e.timeRemoved == null).map((e) => e.option.value).toList());
     return AnimatedContainer(
       height: itemHeight * min(notRemovedItemCount, shownItemCount),
       duration: animationDuration,
@@ -237,6 +229,12 @@ class _ItemAnimationState extends State<_ItemAnimation> with TickerProviderState
         widget.isItemVisible ? 1 : 0,
         curve: Curves.easeOutCubic,
         duration: widget.isItemVisible ? animationDuration : animationDuration * 0.66,
+      );
+    }
+    if (widget.isItemRemoved != oldWidget.isItemRemoved) {
+      translationAnimationController.animateTo(
+        widget.isItemRemoved ? 0 : 0.5,
+        curve: Curves.easeOutCubic,
       );
     }
     if (widget.isItemRemoved && !oldWidget.isItemRemoved) {
