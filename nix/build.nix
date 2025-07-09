@@ -4,11 +4,11 @@
 appimageTools.wrapType2 rec {
 
   pname = "wayxec";
-  version = "1.0.5";
+  version = "1.0.9";
 
   src = fetchurl {
     url =
-      "https://github.com/ross96D/wayxec/releases/download/1.0.5/wayxec-x86_64.AppImage";
+      "https://github.com/ross96D/wayxec/releases/download/${version}/wayxec-x86_64.AppImage";
     hash = "sha256-E5po2aLsCVxN8nXgEUMzzkg5PNVQUL8g330950v8K1c=";
   };
 
