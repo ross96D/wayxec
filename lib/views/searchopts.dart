@@ -222,37 +222,41 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
               ),
             ),
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  Widget optionsView;
-                  if (useListViewOptionsRendering) {
-                    optionsView = ListViewOptionsListWidget<T>(
-                      key: optionsListWidgetGlobalKey,
-                      options: widget.options,
-                      renderOption: widget.renderOption,
-                      prototypeItem: widget.prototypeItem,
-                      filtered: filtered,
-                      highlighted: highlighted,
+              child: ExcludeFocusTraversal(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    Widget optionsView;
+                    if (useListViewOptionsRendering) {
+                      optionsView = ListViewOptionsListWidget<T>(
+                        key: optionsListWidgetGlobalKey,
+                        options: widget.options,
+                        renderOption: widget.renderOption,
+                        prototypeItem: widget.prototypeItem,
+                        filtered: filtered,
+                        highlighted: highlighted,
+                      );
+                    } else {
+                      optionsView = StackOptionsListWidget<T>(
+                        key: optionsListWidgetGlobalKey,
+                        options: widget.options,
+                        renderOption: widget.renderOption,
+                        prototypeItem: widget.prototypeItem,
+                        filtered: filtered,
+                        highlighted: highlighted,
+                        availableHeight: constraints.maxHeight,
+                      );
+                    }
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+                        child: Material(
+                          child: optionsView,
+                        ),
+                      ),
                     );
-                  } else {
-                    optionsView = StackOptionsListWidget<T>(
-                      key: optionsListWidgetGlobalKey,
-                      options: widget.options,
-                      renderOption: widget.renderOption,
-                      prototypeItem: widget.prototypeItem,
-                      filtered: filtered,
-                      highlighted: highlighted,
-                      availableHeight: constraints.maxHeight,
-                    );
-                  }
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
-                      child: Material(child: optionsView),
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
             ),
           ],

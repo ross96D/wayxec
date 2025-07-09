@@ -47,6 +47,8 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         }
       } else if (!visibleItems.any((i) => e.option.value == i.value)) {
         e.timeRemoved = DateTime.now();
+      } else {
+        e.timeRemoved = null;
       }
     }
     items.removeAll(toRemove);
@@ -110,8 +112,12 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
     // print(sortedItems.map((e) => e.option.value).toList());
     // print('Active ($notRemovedItemCount):');
     // print(sortedItems.where((e) => e.timeRemoved == null).map((e) => e.option.value).toList());
-    return SizedBox(
+    return AnimatedContainer(
       height: itemHeight * min(notRemovedItemCount, shownItemCount),
+      duration: animationDuration,
+      curve: Curves.easeOutCubic,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(), // needs to be set for clipBehavior to work for some reason
       child: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.hardEdge,
