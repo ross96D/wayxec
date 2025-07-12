@@ -101,9 +101,9 @@ final class Configuration {
         _setLogLevel,
         _validateLogLevel,
       ),
-      _SetValuesUtility<String>(
+      _SetValuesUtility<bool>(
         "use_fixed_window_height",
-        (v) => _useFixedWindowHeight = v == "true",
+        (v) => _useFixedWindowHeight = v,
       ),
     ];
     final errors = <ReadConfigError>[];
