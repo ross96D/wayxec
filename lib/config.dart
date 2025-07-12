@@ -45,6 +45,9 @@ final class Configuration {
     }
   }
 
+  bool _useFixedWindowHeight;
+  bool get useFixedWindowHeight => _useFixedWindowHeight;
+
   ExepectedValidationError? _validateLogLevel(String levelstr) {
     final level = _levels[levelstr.toLowerCase()];
     if (level == null) {
@@ -54,11 +57,12 @@ final class Configuration {
     }
   }
 
-  Configuration({double opacity = 1, double width = 400, double height = 400})
+  Configuration({double opacity = 1, double width = 400, double height = 400, bool useFixedWindowHeight = true})
       : _opacity = opacity,
         _width = width,
         _height = height,
-        _logLevel = kReleaseMode ? Level.info : Level.debug;
+        _logLevel = kReleaseMode ? Level.info : Level.debug,
+        _useFixedWindowHeight = useFixedWindowHeight;
 
   List<ReadConfigError> _setValues(MapValue values) {
     final mapSetter = <_SetValuesUtility>[
@@ -96,7 +100,11 @@ final class Configuration {
         "logging_level",
         _setLogLevel,
         _validateLogLevel,
-      )
+      ),
+      _SetValuesUtility<String>(
+        "use_fixed_window_height",
+        (v) => _useFixedWindowHeight = v == "true",
+      ),
     ];
     final errors = <ReadConfigError>[];
 

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:wayxec/config.dart';
+import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/searchopts.dart';
 
 const animationDuration = Duration(milliseconds: 250);
@@ -32,7 +34,10 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
 class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsListWidget<T>>
     implements OptionsListRenderer {
   double itemHeight = 64; // TODO 2 this should be passed into here somehow
-  late int shownItemCount = (widget.availableHeight / itemHeight).floor();
+  late int shownItemCount = switch (Get.instance.get<Configuration>().useFixedWindowHeight) {
+    true => (widget.availableHeight / itemHeight).floor(),
+    false => (widget.availableHeight / itemHeight).ceil(),
+  };
 
   int startingIndex = 0;
   final items = <_Item<T>>{};
