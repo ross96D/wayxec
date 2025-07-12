@@ -253,6 +253,8 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 32,
+                        // ugly hack, but flutter TextFormField widget is dogshit
+                        // and doesn't allow me to set a fixed height, so it is what it is
                         vertical: (textFieldHeight - 16) / 2,
                       ),
                     ),

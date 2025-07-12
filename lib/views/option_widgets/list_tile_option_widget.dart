@@ -36,9 +36,7 @@ class ListTileOptionWidget extends StatelessWidget {
             )
           : SizedBox.shrink(),
       enabled: true,
-      tileColor: config.isHighlighted
-          ? Color.alphaBlend(theme.hoverColor, theme.colorScheme.surface)
-          : theme.colorScheme.surface,
+      tileColor: Colors.transparent,
     );
   }
 }

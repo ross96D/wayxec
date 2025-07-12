@@ -115,7 +115,24 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       child: Stack(
         fit: StackFit.expand,
         clipBehavior: Clip.hardEdge,
-        children: stackChildren,
+        children: [
+          ValueListenableBuilder(
+            valueListenable: widget.highlighted,
+            builder: (context, value, child) {
+              return AnimatedPositioned(
+                duration: animationDuration * 0.66,
+                curve: Curves.easeOutCubic,
+                top: widget.itemHeight * (value - startingIndex),
+                height: widget.itemHeight,
+                left: 0,
+                right: 0,
+                child: child!,
+              );
+            },
+            child: ColoredBox(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)),
+          ),
+          ...stackChildren,
+        ],
       ),
     );
   }
