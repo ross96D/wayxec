@@ -52,3 +52,5 @@ config
 
 resvg-0.45.1/
 resvg-0.45.1.tar.xz
+
+analyze_timeline.js
