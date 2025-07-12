@@ -8,7 +8,7 @@ final class _SetValuesUtility<T extends Object> {
   final String key;
 
   final ValidationError? Function(T)? _validator;
-  ValidationError? validator(Object v) => _validator != null ? _validator!(v as T) : null;
+  ValidationError? validator(Object v) => _validator != null ? _validator(v as T) : null;
 
   final void Function(T) _setter;
   void setter(Object v) => _setter(v as T);
