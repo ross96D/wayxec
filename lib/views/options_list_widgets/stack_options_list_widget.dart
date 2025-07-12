@@ -3,8 +3,6 @@ import 'dart:math';
 import 'package:dartx/dartx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:wayxec/config.dart';
-import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/searchopts.dart';
 
 const animationDuration = Duration(milliseconds: 250);
@@ -12,6 +10,7 @@ const animationDuration = Duration(milliseconds: 250);
 class StackOptionsListWidget<T extends Object> extends StatefulWidget {
   final List<Option<T>> options;
   final RenderOption<T> renderOption;
+  final double itemHeight;
   final List<Option<T>> filtered;
   final Widget? prototypeItem;
   final ValueNotifier<int> highlighted;
@@ -20,6 +19,7 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
   const StackOptionsListWidget({
     required this.options,
     required this.renderOption,
+    required this.itemHeight,
     required this.filtered,
     required this.prototypeItem,
     required this.highlighted,
@@ -33,11 +33,8 @@ class StackOptionsListWidget<T extends Object> extends StatefulWidget {
 
 class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsListWidget<T>>
     implements OptionsListRenderer {
-  double itemHeight = 64; // TODO 2 this should be passed into here somehow
-  late int shownItemCount = switch (Get.instance.get<Configuration>().useFixedWindowHeight) {
-    true => (widget.availableHeight / itemHeight).floor(),
-    false => (widget.availableHeight / itemHeight).ceil(),
-  };
+  late int focusableItemCount = (widget.availableHeight / widget.itemHeight).floor();
+  late int visibleItemCount = focusableItemCount + 1;
 
   int startingIndex = 0;
   final items = <_Item<T>>{};
@@ -94,9 +91,9 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
               curve: Curves.easeOutCubic,
               left: 0,
               right: 0,
-              top: itemHeight * (e.index - startingIndex),
+              top: widget.itemHeight * (e.index - startingIndex),
               child: _ItemAnimation(
-                isItemVisible: e.timeRemoved == null && isItemVisible(e.index),
+                isItemVisible: e.timeRemoved == null && isItemAtLeastPartiallyVisible(e.index),
                 isItemRemoved: e.timeRemoved != null,
                 child: widget.renderOption(
                   context,
@@ -110,7 +107,7 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       );
     }
     return AnimatedContainer(
-      height: itemHeight * min(notRemovedItemCount, shownItemCount),
+      height: min(widget.availableHeight, widget.itemHeight * notRemovedItemCount),
       duration: animationDuration,
       curve: Curves.easeOutCubic,
       clipBehavior: Clip.hardEdge,
@@ -123,8 +120,8 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
     );
   }
 
-  int getRenderStart() => max(0, startingIndex - 2);
-  int getRenderEnd() => min((startingIndex + shownItemCount + 2), widget.filtered.length);
+  int getRenderStart() => max(0, startingIndex - 1);
+  int getRenderEnd() => min((startingIndex + focusableItemCount + 2), widget.filtered.length);
   List<Option<T>> getVisibleItems() => widget.filtered.sublist(
     getRenderStart(),
     getRenderEnd(),
@@ -132,7 +129,12 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
 
   @override
   bool isItemVisible(int index) {
-    final lastVisibleItem = startingIndex + shownItemCount;
+    final lastVisibleItem = startingIndex + focusableItemCount;
+    return index >= startingIndex && index < lastVisibleItem;
+  }
+
+  bool isItemAtLeastPartiallyVisible(int index) {
+    final lastVisibleItem = startingIndex + visibleItemCount;
     return index >= startingIndex && index < lastVisibleItem;
   }
 
@@ -142,14 +144,14 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       return;
     }
     index = switch (direction) {
-      ScrollDirection.idle => index - ((shownItemCount - 1) / 2).ceil(),
-      ScrollDirection.forward => index - (shownItemCount - 1),
+      ScrollDirection.idle => index - ((focusableItemCount - 1) / 2).ceil(),
+      ScrollDirection.forward => index - (focusableItemCount - 1),
       ScrollDirection.reverse => index,
     };
     if (index < 0) {
       index = 0;
     }
-    final lastStartingItem = widget.filtered.length - shownItemCount;
+    final lastStartingItem = widget.filtered.length - focusableItemCount;
     if (index > lastStartingItem) {
       index = lastStartingItem;
     }

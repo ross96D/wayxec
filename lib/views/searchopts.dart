@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:fuzzy_string/fuzzy_string.dart';
+import 'package:wayxec/config.dart';
+import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/options_list_widgets/list_view_options_list_widget.dart';
 import 'package:wayxec/views/options_list_widgets/stack_options_list_widget.dart';
 
@@ -202,6 +204,38 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
   @override
   Widget build(BuildContext context) {
     const useListViewOptionsRendering = false;
+    const textFieldHeight = 64.0;
+    const itemHeight = 64.0; // TODO: this should be reported by the same that gives renderOption
+
+    final height = Get.instance<Configuration>().height;
+    final width = Get.instance<Configuration>().width;
+
+    final contentHeight = height - textFieldHeight;
+    final focusableItemCount = (contentHeight / itemHeight).floor();
+    final lastItemPos = itemHeight * focusableItemCount;
+
+    Widget optionsView;
+    if (useListViewOptionsRendering) {
+      optionsView = ListViewOptionsListWidget<T>(
+        key: optionsListWidgetGlobalKey,
+        options: widget.options,
+        renderOption: widget.renderOption,
+        prototypeItem: widget.prototypeItem,
+        filtered: filtered,
+        highlighted: highlighted,
+      );
+    } else {
+      optionsView = StackOptionsListWidget<T>(
+        key: optionsListWidgetGlobalKey,
+        options: widget.options,
+        renderOption: widget.renderOption,
+        itemHeight: itemHeight,
+        prototypeItem: widget.prototypeItem,
+        filtered: filtered,
+        highlighted: highlighted,
+        availableHeight: contentHeight,
+      );
+    }
 
     return Shortcuts(
       shortcuts: shortcuts,
@@ -209,53 +243,51 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
         actions: actionMap,
         child: Column(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-              child: Material(
-                child: TextFormField(
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.all(5.0),
+            SizedBox(
+              height: textFieldHeight,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                child: Material(
+                  child: TextFormField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: (textFieldHeight - 16) / 2,
+                      ),
+                    ),
+                    onChanged: updateFilter,
                   ),
-                  onChanged: updateFilter,
                 ),
               ),
             ),
             Expanded(
               child: ExcludeFocusTraversal(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    Widget optionsView;
-                    if (useListViewOptionsRendering) {
-                      optionsView = ListViewOptionsListWidget<T>(
-                        key: optionsListWidgetGlobalKey,
-                        options: widget.options,
-                        renderOption: widget.renderOption,
-                        prototypeItem: widget.prototypeItem,
-                        filtered: filtered,
-                        highlighted: highlighted,
-                      );
-                    } else {
-                      optionsView = StackOptionsListWidget<T>(
-                        key: optionsListWidgetGlobalKey,
-                        options: widget.options,
-                        renderOption: widget.renderOption,
-                        prototypeItem: widget.prototypeItem,
-                        filtered: filtered,
-                        highlighted: highlighted,
-                        availableHeight: constraints.maxHeight,
-                      );
-                    }
-                    return Align(
-                      alignment: Alignment.topCenter,
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
-                        child: Material(
-                          child: optionsView,
-                        ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+                    child: Material(
+                      child: ShaderMask(
+                        blendMode: BlendMode.dstOut,
+                        shaderCallback: (_) {
+                          // don't use provided bounds that change with inner size, instead use fixed constraints from the LayoutBuilder
+                          final shaderRect = Rect.fromLTRB(
+                            0,
+                            lastItemPos,
+                            width,
+                            contentHeight,
+                          );
+                          return const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Colors.black],
+                          ).createShader(shaderRect);
+                        },
+                        child: optionsView,
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
