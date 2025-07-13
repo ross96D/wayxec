@@ -224,7 +224,7 @@ class MissingKeyError extends ReadConfigError {
   final bool required;
 
   const MissingKeyError(this.key, [this.required = false])
-      : super(required ? Gravity.fatal : Gravity.warn);
+      : super(required ? Gravity.fatal : Gravity.none);
 
   @override
   String toString() {
@@ -235,7 +235,7 @@ class MissingKeyError extends ReadConfigError {
 class ValueNotUsed extends ReadConfigError {
   final String key;
 
-  const ValueNotUsed(this.key) : super(Gravity.none);
+  const ValueNotUsed(this.key) : super(Gravity.warn);
 
   @override
   String toString() {
