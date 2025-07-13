@@ -14,15 +14,7 @@ echo "appimagetoo located in $APPIMAGETOOL"
 
 rm -rf AppDir
 cp -r build/linux/x64/release/bundle AppDir
-echo "
-[Desktop Entry]
-Name=wayxec
-Exec=wayxec
-Type=Application
-Icon=placeholder
-Categories=Utility;
-" >> AppDir/wayxec.desktop
-mv AppDir/wayxec AppDir/AppRun
-touch AppDir/placeholder.svg
+cp linux/wayxec.desktop AppDir/AppRun
+cp linux/wayxec.png AppDir
 
 $APPIMAGETOOL AppDir "$@"
