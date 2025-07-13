@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:fuzzy_string/fuzzy_string.dart';
 import 'package:wayxec/config.dart';
 import 'package:wayxec/utils.dart';
-import 'package:wayxec/views/options_list_widgets/list_view_options_list_widget.dart';
 import 'package:wayxec/views/options_list_widgets/stack_options_list_widget.dart';
 
 /// An [Intent] to highlight the previous option in the autocomplete list.
@@ -149,6 +148,7 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
     super.dispose();
   }
 
+  // ignore: unused_element could this be useful in the future? I dont know so i will let it be for now
   bool _isItemVisible(int index) {
     return optionsListRenderer.isItemVisible(index);
   }
@@ -203,7 +203,6 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
 
   @override
   Widget build(BuildContext context) {
-    const useListViewOptionsRendering = false;
     const textFieldHeight = 64.0;
     const itemHeight = 64.0; // TODO: this should be reported by the same that gives renderOption
 
@@ -214,28 +213,16 @@ class _SearchOptionsState<T extends Object> extends State<SearchOptions<T>> {
     final focusableItemCount = (contentHeight / itemHeight).floor();
     final lastItemPos = itemHeight * focusableItemCount;
 
-    Widget optionsView;
-    if (useListViewOptionsRendering) {
-      optionsView = ListViewOptionsListWidget<T>(
-        key: optionsListWidgetGlobalKey,
-        options: widget.options,
-        renderOption: widget.renderOption,
-        prototypeItem: widget.prototypeItem,
-        filtered: filtered,
-        highlighted: highlighted,
-      );
-    } else {
-      optionsView = StackOptionsListWidget<T>(
-        key: optionsListWidgetGlobalKey,
-        options: widget.options,
-        renderOption: widget.renderOption,
-        itemHeight: itemHeight,
-        prototypeItem: widget.prototypeItem,
-        filtered: filtered,
-        highlighted: highlighted,
-        availableHeight: contentHeight,
-      );
-    }
+    Widget optionsView = StackOptionsListWidget<T>(
+      key: optionsListWidgetGlobalKey,
+      options: widget.options,
+      renderOption: widget.renderOption,
+      itemHeight: itemHeight,
+      prototypeItem: widget.prototypeItem,
+      filtered: filtered,
+      highlighted: highlighted,
+      availableHeight: contentHeight,
+    );
 
     return Shortcuts(
       shortcuts: shortcuts,
