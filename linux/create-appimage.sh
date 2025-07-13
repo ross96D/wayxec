@@ -14,7 +14,8 @@ echo "appimagetoo located in $APPIMAGETOOL"
 
 rm -rf AppDir
 cp -r build/linux/x64/release/bundle AppDir
-cp linux/wayxec.desktop AppDir/AppRun
-cp linux/wayxec.png AppDir
+mv AppDir/wayxec AppDir/AppRun
+cp linux/wayxec.desktop AppDir/AppRun/wayxec.desktop
+cp linux/wayxec.png AppDir/wayxec.png
 
 $APPIMAGETOOL AppDir "$@"
