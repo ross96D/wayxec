@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:dartx/dartx.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:wayxec/views/searchopts.dart';
@@ -106,33 +107,36 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         ),
       );
     }
-    return AnimatedContainer(
-      height: min(widget.availableHeight, widget.itemHeight * notRemovedItemCount),
-      duration: animationDuration,
-      curve: Curves.easeOutCubic,
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(), // needs to be set for clipBehavior to work for some reason
-      child: Stack(
-        fit: StackFit.expand,
+    return Listener(
+      onPointerSignal: onPointerSignal,
+      child: AnimatedContainer(
+        height: min(widget.availableHeight, widget.itemHeight * notRemovedItemCount),
+        duration: animationDuration,
+        curve: Curves.easeOutCubic,
         clipBehavior: Clip.hardEdge,
-        children: [
-          ValueListenableBuilder(
-            valueListenable: widget.highlighted,
-            builder: (context, value, child) {
-              return AnimatedPositioned(
-                duration: animationDuration * 0.66,
-                curve: Curves.easeOutCubic,
-                top: widget.itemHeight * (value - startingIndex),
-                height: widget.itemHeight,
-                left: 0,
-                right: 0,
-                child: child!,
-              );
-            },
-            child: ColoredBox(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)),
-          ),
-          ...stackChildren,
-        ],
+        decoration: BoxDecoration(), // needs to be set for clipBehavior to work for some reason
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.hardEdge,
+          children: [
+            ValueListenableBuilder(
+              valueListenable: widget.highlighted,
+              builder: (context, value, child) {
+                return AnimatedPositioned(
+                  duration: animationDuration * 0.66,
+                  curve: Curves.easeOutCubic,
+                  top: widget.itemHeight * (value - startingIndex),
+                  height: widget.itemHeight,
+                  left: 0,
+                  right: 0,
+                  child: child!,
+                );
+              },
+              child: ColoredBox(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)),
+            ),
+            ...stackChildren,
+          ],
+        ),
       ),
     );
   }
@@ -176,6 +180,30 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
       setState(() {
         startingIndex = index;
       });
+    }
+  }
+
+  void onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      int newHighlight = widget.highlighted.value;
+      ScrollDirection? direction;
+      if (event.scrollDelta.dy < 0) {
+        direction = ScrollDirection.reverse;
+        newHighlight--;
+      } else if (event.scrollDelta.dy > 0) {
+        direction = ScrollDirection.forward;
+        newHighlight++;
+      }
+      if (newHighlight < 0) {
+        newHighlight = 0;
+      }
+      if (newHighlight >= widget.filtered.length) {
+        newHighlight = widget.filtered.length - 1;
+      }
+      if (newHighlight != widget.highlighted.value) {
+        widget.highlighted.value = newHighlight;
+        scrollTo(newHighlight, direction!);
+      }
     }
   }
 }
