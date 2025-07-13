@@ -45,6 +45,10 @@ final class Configuration {
     }
   }
 
+  bool _showScrollBar;
+  bool get showScrollBar => _showScrollBar;
+  void _setShowScrollBar(bool value) => _showScrollBar = value;
+
   ExepectedValidationError? _validateLogLevel(String levelstr) {
     final level = _levels[levelstr.toLowerCase()];
     if (level == null) {
@@ -58,6 +62,7 @@ final class Configuration {
       : _opacity = opacity,
         _width = width,
         _height = height,
+        _showScrollBar = true,
         _logLevel = kReleaseMode ? Level.info : Level.debug;
 
   List<ReadConfigError> _setValues(MapValue values) {
@@ -96,6 +101,10 @@ final class Configuration {
         "logging_level",
         _setLogLevel,
         _validateLogLevel,
+      ),
+      _SetValuesUtility<bool>(
+        "show_scroll_bar",
+        _setShowScrollBar,
       ),
     ];
     final errors = <ReadConfigError>[];

@@ -4,6 +4,8 @@ import 'package:dartx/dartx.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:wayxec/config.dart';
+import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/searchopts.dart';
 
 const animationDuration = Duration(milliseconds: 250);
@@ -136,26 +138,36 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
     }
     final areAllItemsVisible = widget.filtered.length <= focusableItemCount;
     const scrollbarWidth = 3.0;
-    final scrollbar = AnimatedPositioned(
-      duration: animationDuration * 0.66,
-      curve: Curves.easeOutCubic,
-      top: focusableHeight * startingPerc,
-      height: focusableHeight * visiplePerc,
-      right: 0,
-      width: scrollbarWidth,
-      child: AnimatedOpacity(
-        duration: animationDuration,
+    final scrollbar = switch (Get.instance.get<Configuration>().showScrollBar) {
+      true => AnimatedPositioned(
+        duration: animationDuration * 0.66,
         curve: Curves.easeOutCubic,
-        opacity: areAllItemsVisible ? 0 : 1,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(scrollbarWidth)),
-            color: Theme.of(context).colorScheme.secondary,
+        top: focusableHeight * startingPerc,
+        height: focusableHeight * visiplePerc,
+        right: 0,
+        width: scrollbarWidth,
+        child: AnimatedOpacity(
+          duration: animationDuration,
+          curve: Curves.easeOutCubic,
+          opacity: areAllItemsVisible ? 0 : 1,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(scrollbarWidth)),
+              color: Theme.of(context).colorScheme.secondary,
+            ),
           ),
         ),
       ),
-    );
+      false => null,
+    };
 
+    final children = [
+      highlightedChildBackground,
+      ...stackChildren,
+    ];
+    if (scrollbar != null) {
+      children.add(scrollbar);
+    }
     return Listener(
       onPointerSignal: onPointerSignal,
       child: AnimatedContainer(
@@ -167,11 +179,7 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         child: Stack(
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
-          children: [
-            highlightedChildBackground,
-            ...stackChildren,
-            scrollbar,
-          ],
+          children: children,
         ),
       ),
     );
