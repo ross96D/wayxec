@@ -1,5 +1,5 @@
-#!/run/current-system/sw/bin/bash
 #!/bin/bash
+
 # Validate tag_version argument
 if [ $# -ne 1 ]; then
   echo "Error: Exactly one argument (tag_version) required"
