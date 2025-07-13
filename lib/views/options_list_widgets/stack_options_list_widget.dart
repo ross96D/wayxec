@@ -4,6 +4,7 @@ import 'package:dartx/dartx.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:wayxec/config.dart';
 import 'package:wayxec/utils.dart';
 import 'package:wayxec/views/searchopts.dart';
@@ -228,26 +229,35 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
   }
 
   void onPointerSignal(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      int newHighlight = widget.highlighted.value;
-      ScrollDirection? direction;
-      if (event.scrollDelta.dy < 0) {
-        direction = ScrollDirection.reverse;
-        newHighlight--;
-      } else if (event.scrollDelta.dy > 0) {
-        direction = ScrollDirection.forward;
-        newHighlight++;
-      }
-      if (newHighlight < 0) {
-        newHighlight = 0;
-      }
-      if (newHighlight >= widget.filtered.length) {
-        newHighlight = widget.filtered.length - 1;
-      }
-      if (newHighlight != widget.highlighted.value) {
-        widget.highlighted.value = newHighlight;
-        scrollTo(newHighlight, direction!);
-      }
+    if (event is! PointerScrollEvent) {
+      return;
+    }
+
+    int newHighlight = widget.highlighted.value;
+    final multiplier = switch(HardwareKeyboard.instance.isControlPressed) {
+      true => 5,
+      false => 1,
+    };
+    ScrollDirection? direction;
+    assert(event.scrollDelta.dy != 0, "unexpected value of 0 in event.scrollDelta.dy");
+    if (event.scrollDelta.dy < 0) {
+      direction = ScrollDirection.reverse;
+      newHighlight -= 1 * multiplier;
+    } else if (event.scrollDelta.dy > 0) {
+      direction = ScrollDirection.forward;
+      newHighlight += 1 * multiplier;
+    }
+
+    if (newHighlight < 0) {
+      newHighlight = 0;
+    }
+    if (newHighlight >= widget.filtered.length) {
+      newHighlight = widget.filtered.length - 1;
+    }
+
+    if (newHighlight != widget.highlighted.value) {
+      widget.highlighted.value = newHighlight;
+      scrollTo(newHighlight, direction!);
     }
   }
 }
