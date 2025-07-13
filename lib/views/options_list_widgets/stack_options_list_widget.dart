@@ -77,10 +77,11 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         return a.index.compareTo(b.index);
       });
     final stackChildren = <Widget>[];
-    int notRemovedItemCount = 0;
+    int visibleAndNotRemovedItemCount = 0;
     for (final e in sortedItems) {
-      if (e.timeRemoved == null) {
-        notRemovedItemCount++;
+      final isVisible = e.timeRemoved == null && isItemAtLeastPartiallyVisible(e.index);
+      if (isVisible && e.timeRemoved == null) {
+        visibleAndNotRemovedItemCount++;
       }
       stackChildren.add(
         ValueListenableBuilder(
@@ -94,7 +95,7 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
               right: 0,
               top: widget.itemHeight * (e.index - startingIndex),
               child: _ItemAnimation(
-                isItemVisible: e.timeRemoved == null && isItemAtLeastPartiallyVisible(e.index),
+                isItemVisible: isVisible,
                 isItemRemoved: e.timeRemoved != null,
                 child: widget.renderOption(
                   context,
@@ -107,10 +108,58 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
         ),
       );
     }
+
+    final highlightedChildBackground = ValueListenableBuilder(
+      valueListenable: widget.highlighted,
+      builder: (context, value, child) {
+        return AnimatedPositioned(
+          duration: animationDuration * 0.66,
+          curve: Curves.easeOutCubic,
+          top: widget.itemHeight * (value - startingIndex),
+          height: widget.itemHeight,
+          left: 0,
+          right: 0,
+          child: child!,
+        );
+      },
+      child: ColoredBox(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)),
+    );
+
+    final focusableHeight = focusableItemCount * widget.itemHeight;
+    double visiplePerc = focusableItemCount / widget.filtered.length;
+    if (visiplePerc > 1) {
+      visiplePerc = 1;
+    }
+    double startingPerc = startingIndex / widget.filtered.length;
+    if (startingPerc.isNaN) {
+      startingPerc = 0;
+    }
+    final areAllItemsVisible = widget.filtered.length <= focusableItemCount;
+    const scrollbarWidth = 3.0;
+    final scrollbar = AnimatedPositioned(
+      duration: animationDuration * 0.66,
+      curve: Curves.easeOutCubic,
+      top: focusableHeight * startingPerc,
+      height: focusableHeight * visiplePerc,
+      right: 0,
+      width: scrollbarWidth,
+      child: AnimatedOpacity(
+        duration: animationDuration,
+        curve: Curves.easeOutCubic,
+        opacity: areAllItemsVisible ? 0 : 1,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(scrollbarWidth)),
+            color: Theme.of(context).colorScheme.secondary,
+          ),
+        ),
+      ),
+    );
+
     return Listener(
       onPointerSignal: onPointerSignal,
       child: AnimatedContainer(
-        height: min(widget.availableHeight, widget.itemHeight * notRemovedItemCount),
+        height: min(widget.availableHeight, widget.itemHeight * visibleAndNotRemovedItemCount),
         duration: animationDuration,
         curve: Curves.easeOutCubic,
         clipBehavior: Clip.hardEdge,
@@ -119,22 +168,9 @@ class _StackOptionsListWidgetState<T extends Object> extends State<StackOptionsL
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
           children: [
-            ValueListenableBuilder(
-              valueListenable: widget.highlighted,
-              builder: (context, value, child) {
-                return AnimatedPositioned(
-                  duration: animationDuration * 0.66,
-                  curve: Curves.easeOutCubic,
-                  top: widget.itemHeight * (value - startingIndex),
-                  height: widget.itemHeight,
-                  left: 0,
-                  right: 0,
-                  child: child!,
-                );
-              },
-              child: ColoredBox(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)),
-            ),
+            highlightedChildBackground,
             ...stackChildren,
+            scrollbar,
           ],
         ),
       ),
