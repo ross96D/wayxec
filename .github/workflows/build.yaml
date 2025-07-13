@@ -32,11 +32,18 @@ jobs:
         with:
           channel: "1.85.1"
 
-      - run: flutter build linux
+      - name: Run flutter build linux
+        run: flutter build linux
 
-      - run: ./linux/create-appimage.sh
+      - name: Create AppImage
+        run: ./linux/create-appimage.sh
+
+      - name: Create nix release zip
+        run: ./linux/create-nix-release.sh
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: wayxec-x86_64.AppImage
+          artifacts: |
+            wayxec-x86_64.AppImage
+            nix-release-x86_64.zip

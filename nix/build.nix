@@ -4,13 +4,9 @@
 appimageTools.wrapType2 rec {
 
   pname = "wayxec";
-  version = "1.0.9";
+  version = "<version>";
 
-  src = fetchurl {
-    url =
-      "https://github.com/ross96D/wayxec/releases/download/${version}/wayxec-x86_64.AppImage";
-    hash = "sha256-UDutI4xxUMY8J2dSqIVP0i7tNiLXeGleSzWwB8fK6Ac=";
-  };
+  src = ./wayxec-x86_64.AppImage;
 
   extraPkgs = pkgs: [ pkgs.gtk-layer-shell pkgs.libepoxy ];
 
