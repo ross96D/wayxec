@@ -39,7 +39,7 @@ jobs:
         run: ./linux/create-appimage.sh
 
       - name: Create nix release zip
-        run: ./linux/create-nix-release.sh
+        run: ./linux/create-nix-release.sh ${{ github.ref_name }}
 
       - name: Create Release
         uses: ncipollo/release-action@v1
