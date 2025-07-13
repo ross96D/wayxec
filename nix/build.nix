@@ -1,16 +1,19 @@
 { appimageTools, fetchurl, pkgs }:
 
-# wrap the existing release appImage so it runs on nixOS
-appimageTools.wrapType2 {
+let
+  derivationDir = builtins.path { path = ./.; };
+  appImage = "${derivationDir}/wayxec-x86_64.AppImage";
+
+in appimageTools.wrapType2 {
 
   pname = "wayxec";
   version = "<version>";
 
-  src = "wayxec-x86_64.AppImage";
+  src = appImage;
 
   extraPkgs = pkgs: [ pkgs.gtk-layer-shell pkgs.libepoxy ];
 
-  extraInstallCommands = ''
+  postInstall = ''
     # Install .desktop file
     mkdir -p $out/share/applications
     cp linux/wayxec.desktop $out/share/applications
