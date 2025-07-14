@@ -12,11 +12,11 @@ appimageTools.wrapType2 {
   extraInstallCommands = ''
     # Install .desktop file
     mkdir -p $out/share/applications
-    cp wayxec.desktop $out/share/applications
+    cp ${./wayxec.desktop} $out/share/applications
 
     # Install icon
     mkdir -p $out/share/icons/hicolor/256x256/apps
-    cp wayxec.png $out/share/icons/hicolor/256x256/apps
+    cp ${./wayxec.png} $out/share/icons/hicolor/256x256/apps
   '';
 
 }
