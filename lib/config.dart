@@ -4,159 +4,118 @@ import 'package:config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
 
-final class _SetValuesUtility<T extends Object> {
-  final String key;
+const _levels = <String, Level>{
+  "trace": Level.trace,
+  "debug": Level.debug,
+  "info": Level.info,
+  "warning": Level.warning,
+  "error": Level.error,
+  "fatal": Level.fatal,
+};
 
-  final ValidationError? Function(T)? _validator;
-  ValidationError? validator(Object v) => _validator != null ? _validator(v as T) : null;
+ExepectedValidationError? _validateLogLevel(String levelstr) {
+  final level = _levels[levelstr.toLowerCase()];
+  if (level == null) {
+    return ExepectedValidationError(levelstr, _levels.keys.toList());
+  } else {
+    return null;
+  }
+}
 
-  final void Function(T) _setter;
-  void setter(Object v) => _setter(v as T);
+RangeValidationError? _validateOpacity(double value) {
+  if (value > 1 || value < 0) {
+    return RangeValidationError<double>(start: 0, end: 1, actual: value);
+  }
+  return null;
+}
 
-  Type get type => T;
+RangeValidationError? _validateHeightWidth(double value) {
+  if (value < 200) {
+    return RangeValidationError<double>(start: 200, end: double.infinity, actual: value);
+  }
+  return null;
+}
 
-  _SetValuesUtility(this.key, this._setter, [this._validator]);
+(Configuration, ReadConfigErrors?) parseConfigFromString(String content, [String filepath = ""]) {
+  final schema = Schema()
+    ..field<double>("opacity", defaultsTo: 1, validator: _validateOpacity)
+    ..field<double>("width", defaultsTo: 400, validator: _validateHeightWidth)
+    ..field<double>("height", defaultsTo: 400, validator: _validateHeightWidth)
+    ..field<bool>("show_scroll_bar", defaultsTo: true)
+    ..field<String>("logging_level", validator: _validateLogLevel, defaultsTo: kReleaseMode ? "info" : "debug");
+
+  // try {
+  final (result, errors) = ConfigurationParser.parseFromString(content, schema: schema, filepath: filepath);
+  // } on PathNotFoundException catch (e) {
+  //   return (Configuration(), ReadConfigErrors([ConfigurationFileNotFoundError(e.path ?? file.path)]));
+  // }
+
+  if (errors != null) {
+    assert(errors.isNotEmpty);
+    return (Configuration(), ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
+  }
+  assert(result != null);
+
+  final values = result!.values;
+  final config = Configuration(
+    opacity: values["opacity"]?.value as double?,
+    width: values["width"]?.value as double?,
+    height: values["height"]?.value as double?,
+    showScrollBar: values["show_scroll_bar"]?.value as bool?,
+    logLevel: values["logging_level"] != null ? _levels[values["logging_level"]!.value as String] : null,
+  );
+
+  if (result.errors.isNotEmpty) {
+    return (config, ReadConfigErrors(result.errors.map((e) => ConfigEvaluationError(e)).toList()));
+  } else {
+    return (config, null);
+  }
+}
+
+(Configuration, ReadConfigErrors?) parseConfig(File file) {
+  String content;
+  try {
+    content = file.readAsStringSync();
+  } on PathNotFoundException catch (e) {
+    return (Configuration(), ReadConfigErrors([ConfigurationFileNotFoundError(e.path ?? file.path)]));
+  }
+  return parseConfigFromString(content, file.path);
 }
 
 final class Configuration {
-  double _opacity;
-  double get opacity => _opacity;
+  final double opacity;
+  final double width;
+  final double height;
+  final Level logLevel;
+  final bool showScrollBar;
 
-  double _width;
-  double get width => _width;
-
-  double _height;
-  double get height => _height;
-
-  Level _logLevel;
-  Level get logLevel => _logLevel;
-  static const _levels = <String, Level>{
-    "trace": Level.trace,
-    "debug": Level.debug,
-    "info": Level.info,
-    "warning": Level.warning,
-    "error": Level.error,
-    "fatal": Level.fatal,
-  };
-  void _setLogLevel(String levelstr) {
-    final level = _levels[levelstr.toLowerCase()];
-    if (level != null) {
-      _logLevel = level;
-    }
-  }
-
-  bool _showScrollBar;
-  bool get showScrollBar => _showScrollBar;
-  void _setShowScrollBar(bool value) => _showScrollBar = value;
-
-  ExepectedValidationError? _validateLogLevel(String levelstr) {
-    final level = _levels[levelstr.toLowerCase()];
-    if (level == null) {
-      return ExepectedValidationError(levelstr, _levels.keys.toList());
-    } else {
-      return null;
-    }
-  }
-
-  Configuration({double opacity = 1, double width = 400, double height = 400})
-      : _opacity = opacity,
-        _width = width,
-        _height = height,
-        _showScrollBar = true,
-        _logLevel = kReleaseMode ? Level.info : Level.debug;
-
-  List<ReadConfigError> _setValues(MapValue values) {
-    final mapSetter = <_SetValuesUtility>[
-      _SetValuesUtility<double>(
-        "opacity",
-        (v) => _opacity = v,
-        (v) {
-          if (v > 1 || v < 0) {
-            return RangeValidationError<double>(start: 0, end: 1, actual: v);
-          }
-          return null;
-        },
-      ),
-      _SetValuesUtility<double>(
-        "width",
-        (v) => _width = v,
-        (v) {
-          if (v < 200) {
-            return RangeValidationError<double>(start: 200, end: double.infinity, actual: v);
-          }
-          return null;
-        },
-      ),
-      _SetValuesUtility<double>(
-        "height",
-        (v) => _height = v,
-        (v) {
-          if (v < 200) {
-            return RangeValidationError<double>(start: 200, end: double.infinity, actual: v);
-          }
-          return null;
-        },
-      ),
-      _SetValuesUtility<String>(
-        "logging_level",
-        _setLogLevel,
-        _validateLogLevel,
-      ),
-      _SetValuesUtility<bool>(
-        "show_scroll_bar",
-        _setShowScrollBar,
-      ),
-    ];
-    final errors = <ReadConfigError>[];
-
-    for (final entry in mapSetter) {
-      final key = entry.key;
-      final type = entry.type;
-
-      final val = values[key];
-      if (val != null) {
-        if (val.value.runtimeType == type) {
-          final error = entry.validator(val.value);
-          if (error == null) {
-            entry.setter(val.value);
-          } else {
-            errors.add(KeyValidationError(key, error));
-          }
-        } else {
-          errors.add(TypeError(key, type, val.value.runtimeType));
-        }
-      } else {
-        errors.add(MissingKeyError(key));
-      }
-    }
-
-    for (final key in values.value.keys) {
-      bool contains = false;
-      for (final e in mapSetter) {
-        if (e.key == key) {
-          contains = true;
-          break;
-        }
-      }
-      if (!contains) {
-        errors.add(ValueNotUsed(key));
-      }
-    }
-
-    return errors;
-  }
+  Configuration({
+    double? opacity,
+    double? width,
+    double? height,
+    bool? showScrollBar,
+    Level? logLevel,
+  }) : opacity = opacity ?? 1,
+       width = width ?? 400,
+       height = height ?? 400,
+       showScrollBar = showScrollBar ?? true,
+       logLevel = logLevel ?? (kReleaseMode ? Level.info : Level.debug);
 
   @override
   bool operator ==(covariant Configuration other) {
-    return _opacity == other._opacity;
+    return opacity == other.opacity &&
+        width == other.width &&
+        height == other.height &&
+        logLevel == other.logLevel &&
+        showScrollBar == other.showScrollBar;
   }
 
   @override
-  int get hashCode => _opacity.hashCode;
+  int get hashCode => Object.hashAll([opacity, width, height, logLevel, showScrollBar]);
 
   @override
   String toString() {
-    return "Configuration { opacity: $_opacity }";
+    return "Configuration { opacity: $opacity, width: $width, heigth: $height, logLevel: $logLevel, showScrollBar: $showScrollBar }";
   }
 }
 
@@ -217,6 +176,21 @@ sealed class ReadConfigError {
   const ReadConfigError(this.gravity);
 }
 
+class ConfigEvaluationError extends ReadConfigError {
+  final EvaluationError error;
+
+  ConfigEvaluationError(this.error)
+    : super(switch (error) {
+        KeyNotInSchemaError() => Gravity.warn,
+        _ => Gravity.fatal,
+      });
+
+  @override
+  String toString() {
+    return error.error();
+  }
+}
+
 class ConfigurationFileNotFoundError extends ReadConfigError {
   final String path;
 
@@ -225,54 +199,6 @@ class ConfigurationFileNotFoundError extends ReadConfigError {
   @override
   String toString() {
     return "Configuration file not found in $path";
-  }
-}
-
-class MissingKeyError extends ReadConfigError {
-  final String key;
-  final bool required;
-
-  const MissingKeyError(this.key, [this.required = false])
-      : super(required ? Gravity.fatal : Gravity.none);
-
-  @override
-  String toString() {
-    return "Missing ${required ? 'required ' : ''}key $key";
-  }
-}
-
-class ValueNotUsed extends ReadConfigError {
-  final String key;
-
-  const ValueNotUsed(this.key) : super(Gravity.warn);
-
-  @override
-  String toString() {
-    return "$key was found in the configuration but his value is not used";
-  }
-}
-
-class TypeError extends ReadConfigError {
-  final String key;
-  final Type expectedType;
-  final Type gotType;
-
-  const TypeError(this.key, this.expectedType, this.gotType) : super(Gravity.warn);
-}
-
-sealed class ValidationError extends ReadConfigError {
-  const ValidationError() : super(Gravity.warn);
-}
-
-class KeyValidationError extends ValidationError {
-  final ValidationError error;
-  final String key;
-
-  const KeyValidationError(this.key, this.error);
-
-  @override
-  String toString() {
-    return "Key $key validation error: $error";
   }
 }
 
@@ -287,6 +213,11 @@ class RangeValidationError<T extends Comparable> extends ValidationError {
   String toString() {
     return "Range validation error. Expected to be between $start and $end but got $actual";
   }
+
+  @override
+  String error() {
+    return toString();
+  }
 }
 
 class ExepectedValidationError extends ValidationError {
@@ -299,6 +230,11 @@ class ExepectedValidationError extends ValidationError {
   String toString() {
     return "Expected value in ${expected.join(', ')} but got $got";
   }
+
+  @override
+  String error() {
+    return toString();
+  }
 }
 
 class ConfigurationParseError extends ReadConfigError {
@@ -310,43 +246,4 @@ class ConfigurationParseError extends ReadConfigError {
   String toString() {
     return "Configuration parsing $error";
   }
-}
-
-(Configuration, ReadConfigErrors?) parseConfig(File file) {
-  final config = Configuration();
-
-  MapValue? values;
-  List<ParseError>? errors;
-  try {
-    (values, errors) = ConfigurationParser.parseFromFile(file);
-  } on PathNotFoundException catch (e) {
-    return (config, ReadConfigErrors([ConfigurationFileNotFoundError(e.path ?? file.path)]));
-  }
-
-  if (errors != null) {
-    assert(errors.isNotEmpty);
-    return (config, ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
-  }
-  assert(values != null);
-  final setErrors = config._setValues(values!);
-  return (
-    config,
-    setErrors.isNotEmpty ? ReadConfigErrors(setErrors) : null,
-  );
-}
-
-(Configuration, ReadConfigErrors?) parseConfigFromString(String content) {
-  final config = Configuration();
-
-  final (values, errors) = ConfigurationParser.parseFromString(content);
-  if (errors != null) {
-    assert(errors.isNotEmpty);
-    return (config, ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
-  }
-  assert(values != null);
-  final setErrors = config._setValues(values!);
-  return (
-    config,
-    setErrors.isNotEmpty ? ReadConfigErrors(setErrors) : null,
-  );
 }
