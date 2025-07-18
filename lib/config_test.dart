@@ -28,7 +28,7 @@ invalid_key = 23
     expect((resp.$2!.errors[0] as ConfigEvaluationError).error, isA<RangeValidationError>());
     expect(resp.$2!.errors[1], isA<ConfigEvaluationError>());
     expect((resp.$2!.errors[1] as ConfigEvaluationError).error, isA<KeyNotInSchemaError>());
-    expect((resp.$2!.errors[1] as ConfigEvaluationError).error, KeyNotInSchemaError("invalid_key", 1));
+    expect((resp.$2!.errors[1] as ConfigEvaluationError).error, KeyNotInSchemaError("invalid_key", 1, ""));
   });
 
   test("gravity", () {
