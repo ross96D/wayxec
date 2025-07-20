@@ -4,51 +4,36 @@ import 'package:config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
 
-const _levels = <String, Level>{
-  "trace": Level.trace,
-  "debug": Level.debug,
-  "info": Level.info,
-  "warning": Level.warning,
-  "error": Level.error,
-  "fatal": Level.fatal,
-};
-
-ExepectedValidationError? _validateLogLevel(String levelstr) {
-  final level = _levels[levelstr.toLowerCase()];
-  if (level == null) {
-    return ExepectedValidationError(levelstr, _levels.keys.toList());
-  } else {
-    return null;
-  }
-}
-
-RangeValidationError? _validateOpacity(double value) {
+Result<double> _opacity(double value) {
   if (value > 1 || value < 0) {
-    return RangeValidationError<double>(start: 0, end: 1, actual: value);
+    return Failure(RangeValidationError<double>(start: 0, end: 1, actual: value));
   }
-  return null;
+  return Success(value);
 }
 
-RangeValidationError? _validateHeightWidth(double value) {
+Result<double> _heightWidth(double value) {
   if (value < 200) {
-    return RangeValidationError<double>(start: 200, end: double.infinity, actual: value);
+    return Failure(RangeValidationError<double>(start: 200, end: double.infinity, actual: value));
   }
-  return null;
+  return Success(value);
 }
 
 (Configuration, ReadConfigErrors?) parseConfigFromString(String content, [String filepath = ""]) {
-  final schema = Schema()
-    ..field<double>("opacity", defaultsTo: 1, validator: _validateOpacity)
-    ..field<double>("width", defaultsTo: 400, validator: _validateHeightWidth)
-    ..field<double>("height", defaultsTo: 400, validator: _validateHeightWidth)
-    ..field<bool>("show_scroll_bar", defaultsTo: true)
-    ..field<String>("logging_level", validator: _validateLogLevel, defaultsTo: kReleaseMode ? "info" : "debug");
+  final schema = Schema(
+    fields: [
+      NumberField("opacity", defaultTo: 1, transform: _opacity),
+      NumberField("width", defaultTo: 400, transform: _heightWidth),
+      NumberField("height", defaultTo: 400, transform: _heightWidth),
+      BooleanField("show_scroll_bar", defaultTo: true),
+      EnumField(
+        "logging_level",
+        EnumField.transform(Level.values),
+        defaultTo: kReleaseMode ? Level.info : Level.debug,
+      ),
+    ],
+  );
 
-  // try {
   final (result, errors) = ConfigurationParser.parseFromString(content, schema: schema, filepath: filepath);
-  // } on PathNotFoundException catch (e) {
-  //   return (Configuration(), ReadConfigErrors([ConfigurationFileNotFoundError(e.path ?? file.path)]));
-  // }
 
   if (errors != null) {
     assert(errors.isNotEmpty);
@@ -58,11 +43,11 @@ RangeValidationError? _validateHeightWidth(double value) {
 
   final values = result!.values;
   final config = Configuration(
-    opacity: values["opacity"]?.value as double?,
-    width: values["width"]?.value as double?,
-    height: values["height"]?.value as double?,
-    showScrollBar: values["show_scroll_bar"]?.value as bool?,
-    logLevel: values["logging_level"] != null ? _levels[values["logging_level"]!.value as String] : null,
+    opacity: values["opacity"] as double,
+    width: values["width"] as double,
+    height: values["height"] as double,
+    showScrollBar: values["show_scroll_bar"] as bool,
+    logLevel: values["logging_level"] as Level,
   );
 
   if (result.errors.isNotEmpty) {
@@ -207,7 +192,7 @@ class RangeValidationError<T extends Comparable> extends ValidationError {
   final T end;
   final T actual;
 
-  const RangeValidationError({required this.start, required this.end, required this.actual});
+  RangeValidationError({required this.start, required this.end, required this.actual});
 
   @override
   String toString() {
@@ -224,7 +209,7 @@ class ExepectedValidationError extends ValidationError {
   final List<String> expected;
   final String got;
 
-  const ExepectedValidationError(this.got, this.expected);
+  ExepectedValidationError(this.got, this.expected);
 
   @override
   String toString() {
