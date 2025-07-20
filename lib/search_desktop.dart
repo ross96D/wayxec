@@ -174,8 +174,8 @@ class Application {
     return "Application name: $name filepath: $filepath";
   }
 
-  Future<Result<Void, StringError>> run() async {
-    if (dBusActivatable) {
+  Future<Result<Void, StringError>> run({bool forceExec = false}) async {
+    if (!forceExec && dBusActivatable) {
       String dbusname = path.basename(filepath);
       if (dbusname.endsWith(".desktop")) {
         dbusname = dbusname.substring(0, dbusname.length - ".desktop".length);
@@ -198,6 +198,9 @@ class Application {
       try {
         await remoteObject.callMethod("org.freedesktop.Application", "Activate", params);
       } on DBusMethodResponseException catch (e) {
+        if (e is DBusServiceUnknownException) {
+          return run(forceExec: true);
+        }
         return Result.error(StringError("dbus activation error: $e"));
       }
       await SystemNavigator.pop();
