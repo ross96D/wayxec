@@ -4,56 +4,60 @@ import 'package:config/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/web.dart';
 
-Result<double> _opacity(double value) {
+ValidatorResult<double> _opacity(double value) {
   if (value > 1 || value < 0) {
-    return Failure(RangeValidationError<double>(start: 0, end: 1, actual: value));
+    return ValidatorError(RangeValidationError<double>(start: 0, end: 1, actual: value));
   }
-  return Success(value);
+  return ValidatorSuccess();
 }
 
-Result<double> _heightWidth(double value) {
+ValidatorResult<int> _heightWidth(int value) {
   if (value < 200) {
-    return Failure(RangeValidationError<double>(start: 200, end: double.infinity, actual: value));
+    return ValidatorError(RangeValidationError<int>(start: 200, end: -1 >>> 1, actual: value));
   }
-  return Success(value);
+  return ValidatorSuccess();
 }
 
 (Configuration, ReadConfigErrors?) parseConfigFromString(String content, [String filepath = ""]) {
   final schema = Schema(
     fields: [
-      NumberField("opacity", defaultTo: 1, transform: _opacity),
-      NumberField("width", defaultTo: 400, transform: _heightWidth),
-      NumberField("height", defaultTo: 400, transform: _heightWidth),
-      BooleanField("show_scroll_bar", defaultTo: true),
-      EnumField(
+      const DoubleNumberField("opacity", defaultTo: 1, validator: _opacity),
+      const IntegerNumberField("width", defaultTo: 400, validator: _heightWidth),
+      const IntegerNumberField("height", defaultTo: 400, validator: _heightWidth),
+      const BooleanField("show_scroll_bar", defaultTo: true),
+      const EnumField(
         "logging_level",
-        EnumField.transform(Level.values),
+        Level.values,
         defaultTo: kReleaseMode ? Level.info : Level.debug,
       ),
     ],
   );
 
-  final (result, errors) = ConfigurationParser.parseFromString(content, schema: schema, filepath: filepath);
+  final result = ConfigurationParser().parseFromString(content, schema: schema, filepath: filepath);
 
-  if (errors != null) {
-    assert(errors.isNotEmpty);
-    return (Configuration(), ReadConfigErrors(errors.map((e) => ConfigurationParseError(e)).toList()));
-  }
-  assert(result != null);
-
-  final values = result!.values;
-  final config = Configuration(
-    opacity: values["opacity"] as double,
-    width: values["width"] as double,
-    height: values["height"] as double,
-    showScrollBar: values["show_scroll_bar"] as bool,
-    logLevel: values["logging_level"] as Level,
-  );
-
-  if (result.errors.isNotEmpty) {
-    return (config, ReadConfigErrors(result.errors.map((e) => ConfigEvaluationError(e)).toList()));
-  } else {
-    return (config, null);
+  switch (result) {
+    case EvaluationParseError error:
+      return (Configuration(), ReadConfigErrors(error.errors.map((e) => ConfigurationParseError(e)).toList()));
+    case EvaluationValidationError result:
+      final values = result.values;
+      final config = Configuration(
+        opacity: values["opacity"] as double?,
+        width: values["width"] as double?,
+        height: values["height"] as double?,
+        showScrollBar: values["show_scroll_bar"] as bool?,
+        logLevel: values["logging_level"] as Level?,
+      );
+      return (config, ReadConfigErrors(result.errors.map((e) => ConfigEvaluationError(e)).toList()));
+    case EvaluationSuccess data:
+      final values = data.values;
+      final config = Configuration(
+        opacity: values["opacity"] as double,
+        width: values["width"] as double,
+        height: values["height"] as double,
+        showScrollBar: values["show_scroll_bar"] as bool,
+        logLevel: values["logging_level"] as Level,
+      );
+      return (config, null);
   }
 }
 
